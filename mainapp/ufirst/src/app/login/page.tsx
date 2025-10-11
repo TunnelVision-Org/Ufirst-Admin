@@ -3,17 +3,33 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FormEvent } from 'react';
+import { FormEvent, useState } from 'react';
 import AnimatedCard from '../components/AnimatedCard';
 
 export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const router = useRouter();
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async(e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Here you would normally validate credentials via API
-    // For now, we'll just navigate to the dashboard
-    router.push('/dashboard');
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (response.ok){
+        router.push('/dashboard');
+      } else {
+        console.error('Login error, something external, check your credentials');
+      }
+    } catch (error) {
+      console.error('Login Error, something internal', error);
+    }
   };
   return (
     <main className="min-h-screen flex items-center justify-center bg-[#F7F5ED] font-sans relative overflow-hidden">
@@ -43,11 +59,11 @@ export default function LoginPage() {
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium mb-1 text-black">Email</label>
-              <input id="email" name="email" type="email" autoComplete="email" required className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white/60 text-black placeholder-black/40" />
+              <input id="email" name="email" type="email" autoComplete="email" required onChange={e => setEmail(e.target.value)}className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white/60 text-black placeholder-black/40" />
             </div>
             <div>
               <label htmlFor="password" className="block text-sm font-medium mb-1 text-black">Password</label>
-              <input id="password" name="password" type="password" autoComplete="current-password" required className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white/60 text-black placeholder-black/40" />
+              <input id="password" name="password" type="password" autoComplete="current-password" required onChange={e => setPassword(e.target.value) }className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white/60 text-black placeholder-black/40" />
             </div>
             <div className="flex items-center justify-between text-sm text-black">
               <label className="flex items-center gap-2">
