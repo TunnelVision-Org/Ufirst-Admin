@@ -28,9 +28,15 @@ export default function RegisterPage() {
           </div>
           <h1 className="text-xl font-semibold mb-6 text-black">Create your account</h1>
           <form className="space-y-5">
-            <div>
-              <label htmlFor="fullName" className="block text-sm font-medium mb-1 text-black">Full Name</label>
-              <input id="fullName" name="fullName" type="text" autoComplete="name" required className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white/60 text-black placeholder-black/40" />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium mb-1 text-black">First Name</label>
+                <input id="firstName" name="firstName" type="text" autoComplete="given-name" required className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white/60 text-black placeholder-black/40" />
+              </div>
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-medium mb-1 text-black">Last Name</label>
+                <input id="lastName" name="lastName" type="text" autoComplete="family-name" required className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white/60 text-black placeholder-black/40" />
+              </div>
             </div>
             <div>
               <label htmlFor="email" className="block text-sm font-medium mb-1 text-black">Email</label>

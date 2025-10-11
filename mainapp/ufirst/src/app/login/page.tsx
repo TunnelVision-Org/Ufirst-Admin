@@ -1,8 +1,20 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { FormEvent } from 'react';
 import AnimatedCard from '../components/AnimatedCard';
 
 export default function LoginPage() {
+  const router = useRouter();
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // Here you would normally validate credentials via API
+    // For now, we'll just navigate to the dashboard
+    router.push('/dashboard');
+  };
   return (
     <main className="min-h-screen flex items-center justify-center bg-[#F7F5ED] font-sans relative overflow-hidden">
       {/* Full screen background image */}
@@ -28,7 +40,7 @@ export default function LoginPage() {
             <div className="text-sm text-black/60">Become the best version of you</div>
           </div>
           <h1 className="text-xl font-semibold mb-6 text-black">Log in</h1>
-          <form className="space-y-5">
+          <form className="space-y-5" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium mb-1 text-black">Email</label>
               <input id="email" name="email" type="email" autoComplete="email" required className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white/60 text-black placeholder-black/40" />
