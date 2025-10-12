@@ -4,31 +4,59 @@ import DashboardLayout from '@/app/components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Avatar, AvatarFallback } from '@/app/components/ui/avatar';
-import { UserCircle, Plus, Search, Phone, Mail, Calendar, TrendingUp, MoreVertical } from 'lucide-react';
+import { UserCircle, Plus, Search, Phone, Mail, Calendar, TrendingUp, MoreVertical, Trash2, X, Check } from 'lucide-react';
 import { getAllClients } from '@/app/data/mockData';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
 export default function ClientsPage() {
-  const allClients = getAllClients();
+  const [clients, setClients] = useState(getAllClients());
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingClientId, setEditingClientId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{name: string; email: string; phone: string} | null>(null);
 
-  const filteredClients = allClients.filter(client =>
+  const handleDeleteClient = (clientId: string, clientName: string) => {
+    if (confirm(`Are you sure you want to DELETE client "${clientName}"? This will permanently remove the client from the system. This action cannot be undone.`)) {
+      setClients(clients.filter(c => c.id !== clientId));
+      alert(`Client ${clientName} has been deleted from the system.`);
+    }
+  };
+
+  const handleEdit = (client: typeof clients[0]) => {
+    setEditingClientId(client.id);
+    setEditForm({
+      name: client.name,
+      email: client.email,
+      phone: client.phone
+    });
+  };
+
+  const handleSave = (clientId: string) => {
+    if (editForm) {
+      setClients(clients.map(c => 
+        c.id === clientId 
+          ? { ...c, name: editForm.name, email: editForm.email, phone: editForm.phone }
+          : c
+      ));
+      setEditingClientId(null);
+      setEditForm(null);
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingClientId(null);
+    setEditForm(null);
+  };
+
+  const filteredClients = clients.filter(client =>
     client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     client.trainer.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const totalClients = allClients.length;
-  const newThisWeek = allClients.filter(c => {
-    const joinDate = new Date(c.joinDate);
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    return joinDate >= weekAgo;
-  }).length;
-  const avgAttendance = Math.round(
-    allClients.reduce((sum, c) => sum + c.sessionsCompleted, 0) / totalClients
-  );
+  const totalClients = clients.length;
+  const vipClients = clients.filter(c => c.membershipType === 'VIP').length;
+  const premiumClients = clients.filter(c => c.membershipType === 'Premium').length;
 
   const getMembershipColor = (type: string) => {
     switch (type) {
@@ -54,24 +82,12 @@ export default function ClientsPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <UserCircle className="h-4 w-4" />
                 Total Clients
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{totalClients}</div>
-              <p className="text-xs text-gray-500 mt-1">{newThisWeek} new this week</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Total Members
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -82,25 +98,25 @@ export default function ClientsPage() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                New This Week
+                <TrendingUp className="h-4 w-4" />
+                VIP Members
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{newThisWeek}</div>
-              <p className="text-xs text-gray-500 mt-1">Joined recently</p>
+              <div className="text-3xl font-bold text-gray-900">{vipClients}</div>
+              <p className="text-xs text-gray-500 mt-1">Premium tier</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Avg. Sessions
+                <Calendar className="h-4 w-4" />
+                Premium Members
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{avgAttendance}</div>
-              <p className="text-xs text-gray-500 mt-1">Per client</p>
+              <div className="text-3xl font-bold text-gray-900">{premiumClients}</div>
+              <p className="text-xs text-gray-500 mt-1">Standard tier</p>
             </CardContent>
           </Card>
         </div>
@@ -120,7 +136,7 @@ export default function ClientsPage() {
                   placeholder="Search clients..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] w-64"
+                  className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3C4526] w-64"
                 />
               </div>
             </div>
@@ -142,42 +158,110 @@ export default function ClientsPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {filteredClients.map((client) => (
+                {filteredClients.map((client) => {
+                  const isEditing = editingClientId === client.id;
+                  
+                  return (
                   <Card key={client.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 flex-1">
                           <Avatar className="h-12 w-12">
-                            <AvatarFallback className="bg-[#8B5CF6] text-white font-semibold">
-                              {client.name.split(' ').map(n => n[0]).join('')}
+                            <AvatarFallback className="bg-[#3C4526] text-white font-semibold">
+                              {(isEditing ? editForm?.name : client.name)?.split(' ').map(n => n[0]).join('')}
                             </AvatarFallback>
                           </Avatar>
-                          <div>
-                            <h3 className="font-semibold text-gray-900">{client.name}</h3>
-                            <div className="flex gap-2 mt-1">
-                              <span className={cn(
-                                "text-xs px-2 py-0.5 rounded-full font-medium",
-                                getMembershipColor(client.membershipType)
-                              )}>
-                                {client.membershipType}
-                              </span>
-                            </div>
+                          <div className="flex-1">
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={editForm?.name || ''}
+                                onChange={(e) => setEditForm(editForm ? {...editForm, name: e.target.value} : null)}
+                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
+                                placeholder="Name"
+                              />
+                            ) : (
+                              <>
+                                <h3 className="font-semibold text-gray-900">{client.name}</h3>
+                                <div className="flex gap-2 mt-1">
+                                  <span className={cn(
+                                    "text-xs px-2 py-0.5 rounded-full font-medium",
+                                    getMembershipColor(client.membershipType)
+                                  )}>
+                                    {client.membershipType}
+                                  </span>
+                                </div>
+                              </>
+                            )}
                           </div>
                         </div>
-                        <Button variant="outline" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
+                        {isEditing ? (
+                          <div className="flex gap-1">
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 text-green-600 hover:bg-green-50"
+                              onClick={() => handleSave(client.id)}
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 text-red-600 hover:bg-red-50"
+                              onClick={handleCancel}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => handleEdit(client)}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
 
                       <div className="space-y-2 text-sm mb-4">
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Mail className="h-4 w-4" />
-                          <span className="truncate">{client.email}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Phone className="h-4 w-4" />
-                          <span>{client.phone}</span>
-                        </div>
+                        {isEditing ? (
+                          <>
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-4 w-4 text-gray-400" />
+                              <input
+                                type="email"
+                                value={editForm?.email || ''}
+                                onChange={(e) => setEditForm(editForm ? {...editForm, email: e.target.value} : null)}
+                                className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
+                                placeholder="Email"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4 text-gray-400" />
+                              <input
+                                type="tel"
+                                value={editForm?.phone || ''}
+                                onChange={(e) => setEditForm(editForm ? {...editForm, phone: e.target.value} : null)}
+                                className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
+                                placeholder="Phone"
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <Mail className="h-4 w-4" />
+                              <span className="truncate">{client.email}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <Phone className="h-4 w-4" />
+                              <span>{client.phone}</span>
+                            </div>
+                          </>
+                        )}
                       </div>
 
                       <div className="border-t pt-3 mb-3">
@@ -195,24 +279,11 @@ export default function ClientsPage() {
                         <p className="text-xs text-gray-500">{client.trainer.specialization}</p>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-2 pt-3 border-t">
+                      <div className="flex justify-between pt-3 border-t">
                         <div>
                           <p className="text-xs text-gray-500">Joined</p>
                           <p className="text-sm font-medium text-gray-900">
                             {new Date(client.joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Sessions</p>
-                          <p className="text-sm font-medium text-gray-900">{client.sessionsCompleted}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Last Visit</p>
-                          <p className="text-sm font-medium text-gray-900">
-                            {client.lastSession 
-                              ? new Date(client.lastSession).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                              : 'N/A'
-                            }
                           </p>
                         </div>
                       </div>
@@ -221,13 +292,20 @@ export default function ClientsPage() {
                         <Button variant="outline" className="flex-1" size="sm">
                           View Profile
                         </Button>
-                        <Button variant="outline" className="flex-1" size="sm">
-                          Schedule
+                        <Button 
+                          variant="outline" 
+                          className="flex-1 text-red-600 hover:bg-red-50 border-red-200" 
+                          size="sm"
+                          onClick={() => handleDeleteClient(client.id, client.name)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
                         </Button>
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                );
+                })}
               </div>
             )}
           </CardContent>

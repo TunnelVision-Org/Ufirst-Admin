@@ -1,26 +1,59 @@
 'use client';
 
 import DashboardLayout from '@/app/components/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Avatar, AvatarFallback } from '@/app/components/ui/avatar';
-import { Plus, UserPlus, Users, TrendingUp, Award, Phone, Mail, MoreVertical, Search } from 'lucide-react';
-import { mockTrainers } from '@/app/data/mockData';
+import { Plus, UserPlus, Users, TrendingUp, Award, Phone, Mail, MoreVertical, Search, X, Calendar, AlertTriangle, Clock, FileText, User, Trash2, Check } from 'lucide-react';
+import { mockTrainers, mockServiceReports, type Trainer } from '@/app/data/mockData';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
 export default function TrainersPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null);
+  const [selectedTrainerForReports, setSelectedTrainerForReports] = useState<Trainer | null>(null);
+  const [reports, setReports] = useState(mockServiceReports);
+  const [trainers, setTrainers] = useState(mockTrainers);
+  const [editingTrainerId, setEditingTrainerId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{name: string; specialization: string; email: string; phone: string} | null>(null);
 
-  const filteredTrainers = mockTrainers.filter(trainer =>
+  const filteredTrainers = trainers.filter(trainer =>
     trainer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     trainer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     trainer.specialization.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const totalTrainers = mockTrainers.length;
-  const totalClients = mockTrainers.reduce((sum, t) => sum + t.clientCount, 0);
-  const avgRating = (mockTrainers.reduce((sum, t) => sum + t.rating, 0) / totalTrainers).toFixed(1);
+  const totalTrainers = trainers.length;
+  const totalClients = trainers.reduce((sum, t) => sum + t.clientCount, 0);
+  const avgRating = (trainers.reduce((sum, t) => sum + t.rating, 0) / totalTrainers).toFixed(1);
+
+  const handleEdit = (trainer: Trainer) => {
+    setEditingTrainerId(trainer.id);
+    setEditForm({
+      name: trainer.name,
+      specialization: trainer.specialization,
+      email: trainer.email,
+      phone: trainer.phone
+    });
+  };
+
+  const handleSave = (trainerId: string) => {
+    if (editForm) {
+      setTrainers(trainers.map(t => 
+        t.id === trainerId 
+          ? { ...t, name: editForm.name, specialization: editForm.specialization, email: editForm.email, phone: editForm.phone }
+          : t
+      ));
+      setEditingTrainerId(null);
+      setEditForm(null);
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingTrainerId(null);
+    setEditForm(null);
+  };
 
   return (
     <DashboardLayout userName="Admin">
@@ -39,10 +72,10 @@ export default function TrainersPage() {
                 placeholder="Search trainers..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] w-64"
+                className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-[#3C4526] w-64"
               />
             </div>
-            <Button className="bg-[#8B5CF6] hover:bg-[#7C3AED]">
+            <Button className="bg-[#3C4526] hover:bg-[#7C3AED]">
               <Plus className="h-4 w-4 mr-2" />
               Add Trainer
             </Button>
@@ -117,64 +150,139 @@ export default function TrainersPage() {
                     : 'Get started by adding your first trainer to the system.'
                   }
                 </p>
-                {searchQuery ? (
+                {searchQuery && (
                   <Button variant="outline" onClick={() => setSearchQuery('')}>
                     Clear Search
                   </Button>
-                ) : (
-                  <Button className="bg-[#8B5CF6] hover:bg-[#7C3AED]">
+                )}
+                {/* Add Trainer Button - Hidden for now */}
+                {/* {!searchQuery && (
+                  <Button className="bg-[#3C4526] hover:bg-[#7C3AED]">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Trainer
                   </Button>
-                )}
+                )} */}
               </div>
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredTrainers.map((trainer) => (
+            {filteredTrainers.map((trainer) => {
+              const isEditing = editingTrainerId === trainer.id;
+              
+              return (
               <Card key={trainer.id} className="hover:shadow-lg transition-shadow">
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 flex-1">
                     <Avatar className="h-16 w-16">
-                      <AvatarFallback className="bg-[#8B5CF6] text-white text-lg font-semibold">
-                        {trainer.name.split(' ').map(n => n[0]).join('')}
+                      <AvatarFallback className="bg-[#3C4526] text-white text-lg font-semibold">
+                        {(isEditing ? editForm?.name : trainer.name)?.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900">{trainer.name}</h3>
-                      <p className="text-sm text-gray-500">{trainer.specialization}</p>
+                    <div className="flex-1">
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={editForm?.name || ''}
+                            onChange={(e) => setEditForm(editForm ? {...editForm, name: e.target.value} : null)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
+                            placeholder="Name"
+                          />
+                          <input
+                            type="text"
+                            value={editForm?.specialization || ''}
+                            onChange={(e) => setEditForm(editForm ? {...editForm, specialization: e.target.value} : null)}
+                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
+                            placeholder="Specialization"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <h3 className="text-lg font-bold text-gray-900">{trainer.name}</h3>
+                          <p className="text-sm text-gray-500">{trainer.specialization}</p>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <Button variant="outline" size="icon" className="h-8 w-8">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
+                  {isEditing ? (
+                    <div className="flex gap-1">
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="h-8 w-8 text-green-600 hover:bg-green-50"
+                        onClick={() => handleSave(trainer.id)}
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="h-8 w-8 text-red-600 hover:bg-red-50"
+                        onClick={handleCancel}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => handleEdit(trainer)}
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
 
               <CardContent className="space-y-4">
                 {/* Contact Info */}
                 <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Mail className="h-4 w-4" />
-                    <span>{trainer.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Phone className="h-4 w-4" />
-                    <span>{trainer.phone}</span>
-                  </div>
+                  {isEditing ? (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-gray-400" />
+                        <input
+                          type="email"
+                          value={editForm?.email || ''}
+                          onChange={(e) => setEditForm(editForm ? {...editForm, email: e.target.value} : null)}
+                          className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
+                          placeholder="Email"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-gray-400" />
+                        <input
+                          type="tel"
+                          value={editForm?.phone || ''}
+                          onChange={(e) => setEditForm(editForm ? {...editForm, phone: e.target.value} : null)}
+                          className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
+                          placeholder="Phone"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Mail className="h-4 w-4" />
+                        <span>{trainer.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Phone className="h-4 w-4" />
+                        <span>{trainer.phone}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Stats Row */}
-                <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                   <div>
                     <p className="text-xs text-gray-500">Clients</p>
                     <p className="text-xl font-bold text-gray-900">{trainer.clientCount}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">This Week</p>
-                    <p className="text-xl font-bold text-gray-900">{trainer.sessionsThisWeek}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Rating</p>
@@ -205,17 +313,271 @@ export default function TrainersPage() {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">
-                  <Button variant="outline" className="flex-1" size="sm">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1" 
+                    size="sm"
+                    onClick={() => setSelectedTrainer(trainer)}
+                  >
                     View Clients
                   </Button>
-                  <Button variant="outline" className="flex-1" size="sm">
-                    View Reports ({trainer.reports.length})
+                  <Button 
+                    variant="outline" 
+                    className="flex-1" 
+                    size="sm"
+                    onClick={() => setSelectedTrainerForReports(trainer)}
+                  >
+                    View Reports ({reports.filter(r => r.trainerId === trainer.id).length})
                   </Button>
                 </div>
               </CardContent>
             </Card>
-          ))}
+          );
+            })}
         </div>
+        )}
+
+        {/* Clients Modal */}
+        {selectedTrainer && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedTrainer(null)}>
+            <Card className="w-full max-w-2xl max-h-[85vh] overflow-hidden bg-[#F7F5ED]" onClick={(e) => e.stopPropagation()}>
+              <CardHeader className="pb-3 pt-4 px-6 border-b bg-gradient-to-r from-[#3C4526] to-[#2d331c]">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg font-semibold text-white">
+                      {selectedTrainer.name}'s Clients
+                    </CardTitle>
+                    <CardDescription className="text-white/80 text-xs mt-0.5">
+                      {selectedTrainer.clients.length} {selectedTrainer.clients.length === 1 ? 'client' : 'clients'}
+                    </CardDescription>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="h-8 w-8 text-white hover:bg-white/20 -mr-2"
+                    onClick={() => setSelectedTrainer(null)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 overflow-y-auto max-h-[calc(85vh-80px)]">
+                {selectedTrainer.clients.length === 0 ? (
+                  <div className="flex items-center justify-center py-16">
+                    <div className="text-center">
+                      <Users className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                      <p className="text-sm text-gray-500">No clients assigned</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {selectedTrainer.clients.map((client) => (
+                      <Card key={client.id} className="border border-gray-200 hover:border-[#3C4526] transition-colors bg-white">
+                        <CardContent className="p-3">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarFallback className="bg-[#3C4526] text-white text-sm font-medium">
+                                {client.name.split(' ').map(n => n[0]).join('')}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-medium text-sm text-gray-900 truncate">{client.name}</h3>
+                                <span className={cn(
+                                  "text-[10px] px-1.5 py-0.5 rounded font-medium whitespace-nowrap",
+                                  client.membershipType === 'VIP' 
+                                    ? 'bg-[#3C4526] text-white' 
+                                    : 'bg-gray-100 text-gray-700'
+                                )}>
+                                  {client.membershipType}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
+                                <span className="flex items-center gap-1">
+                                  <Mail className="h-3 w-3" />
+                                  {client.email}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Phone className="h-3 w-3" />
+                                  {client.phone}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Reports Modal */}
+        {selectedTrainerForReports && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedTrainerForReports(null)}>
+            <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden bg-[#F7F5ED] relative" onClick={(e) => e.stopPropagation()}>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="absolute top-2 right-2 h-8 w-8 text-gray-600 hover:bg-gray-200 z-10"
+                onClick={() => setSelectedTrainerForReports(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <CardContent className="p-4 overflow-y-auto max-h-[90vh]">
+                {(() => {
+                  const trainerReports = reports.filter(r => r.trainerId === selectedTrainerForReports.id);
+                  
+                  const getCategoryIcon = (category: string) => {
+                    switch (category) {
+                      case 'late': return Clock;
+                      case 'unprofessional': return AlertTriangle;
+                      case 'unprepared': return FileText;
+                      case 'inappropriate': return AlertTriangle;
+                      default: return FileText;
+                    }
+                  };
+
+                  const getCategoryLabel = (category: string) => {
+                    const labels: Record<string, string> = {
+                      'late': 'Late Arrival',
+                      'unprofessional': 'Unprofessional',
+                      'unprepared': 'Unprepared',
+                      'inappropriate': 'Inappropriate Behavior',
+                      'other': 'Other'
+                    };
+                    return labels[category] || category;
+                  };
+
+                  const getSeverityColor = (severity: string) => {
+                    switch (severity) {
+                      case 'high': return 'bg-red-100 text-red-700 border-red-200';
+                      case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+                      case 'low': return 'bg-blue-100 text-blue-700 border-blue-200';
+                      default: return 'bg-gray-100 text-gray-700 border-gray-200';
+                    }
+                  };
+
+                  const handleDismissReport = (reportId: string) => {
+                    if (confirm('Are you sure you want to dismiss this report? This action cannot be undone.')) {
+                      setReports(reports.filter(r => r.id !== reportId));
+                    }
+                  };
+
+                  const handleDeleteTrainer = (reportId: string, trainerName: string) => {
+                    if (confirm(`Are you sure you want to DELETE trainer "${trainerName}"? This will permanently remove the trainer from the system. This action cannot be undone.`)) {
+                      const report = reports.find(r => r.id === reportId);
+                      if (report) {
+                        setReports(reports.filter(r => r.trainerId !== report.trainerId));
+                        setSelectedTrainerForReports(null);
+                        alert(`Trainer ${trainerName} has been deleted from the system.`);
+                      }
+                    }
+                  };
+
+                  return trainerReports.length === 0 ? (
+                    <div className="flex items-center justify-center py-16">
+                      <div className="text-center">
+                        <FileText className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                        <p className="text-sm text-gray-500">No reports for this trainer</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          Reports for {selectedTrainerForReports.name}
+                        </h3>
+                        <p className="text-sm text-gray-500">{trainerReports.length} {trainerReports.length === 1 ? 'report' : 'reports'}</p>
+                      </div>
+                      {trainerReports.map((report) => {
+                        const CategoryIcon = getCategoryIcon(report.category);
+                        
+                        return (
+                          <Card 
+                            key={report.id} 
+                            className="hover:shadow-md transition-shadow border-l-4 bg-white" 
+                            style={{ 
+                              borderLeftColor: report.severity === 'high' ? '#dc2626' : 
+                                              report.severity === 'medium' ? '#eab308' : '#3b82f6' 
+                            }}
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex items-start gap-3 flex-1">
+                                  <div className={cn(
+                                    "p-2 rounded-lg border",
+                                    getSeverityColor(report.severity)
+                                  )}>
+                                    <CategoryIcon className="h-4 w-4" />
+                                  </div>
+                                  
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <h4 className="font-semibold text-sm text-gray-900">{getCategoryLabel(report.category)}</h4>
+                                      <span className={cn(
+                                        "text-[10px] px-1.5 py-0.5 rounded-full font-medium border",
+                                        getSeverityColor(report.severity)
+                                      )}>
+                                        {report.severity.toUpperCase()}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 text-xs text-gray-600 mb-2">
+                                      <div className="flex items-center gap-1">
+                                        <User className="h-3 w-3" />
+                                        <span>Client: <strong>{report.clientName}</strong></span>
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <Clock className="h-3 w-3" />
+                                        <span>{new Date(report.date).toLocaleDateString('en-US', { 
+                                          month: 'short', 
+                                          day: 'numeric', 
+                                          year: 'numeric' 
+                                        })}</span>
+                                      </div>
+                                    </div>
+
+                                    <p className="text-gray-700 text-xs leading-relaxed">
+                                      {report.description}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="flex gap-2 pt-3 border-t">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="flex-1 text-gray-600 hover:bg-gray-50 text-xs h-8"
+                                  onClick={() => handleDismissReport(report.id)}
+                                >
+                                  <X className="h-3 w-3 mr-1" />
+                                  Dismiss
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  className="flex-1 text-red-600 hover:bg-red-50 border-red-200 text-xs h-8"
+                                  onClick={() => handleDeleteTrainer(report.id, report.trainerName)}
+                                >
+                                  <Trash2 className="h-3 w-3 mr-1" />
+                                  Delete Trainer
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
     </DashboardLayout>

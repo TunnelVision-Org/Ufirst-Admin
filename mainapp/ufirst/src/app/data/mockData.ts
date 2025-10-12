@@ -5,8 +5,6 @@ export interface Client {
   phone: string;
   joinDate: string;
   membershipType: 'Premium' | 'VIP';
-  lastSession?: string;
-  sessionsCompleted: number;
   avatar?: string;
 }
 
@@ -19,6 +17,18 @@ export interface Report {
   clientId?: string;
 }
 
+export interface ServiceReport {
+  id: string;
+  clientId: string;
+  clientName: string;
+  trainerId: string;
+  trainerName: string;
+  date: string;
+  category: 'unprofessional' | 'late' | 'unprepared' | 'inappropriate' | 'other';
+  severity: 'low' | 'medium' | 'high';
+  description: string;
+}
+
 export interface Trainer {
   id: string;
   name: string;
@@ -27,7 +37,6 @@ export interface Trainer {
   specialization: string;
   hireDate: string;
   clientCount: number;
-  sessionsThisWeek: number;
   rating: number;
   avatar?: string;
   clients: Client[];
@@ -43,7 +52,6 @@ export const mockTrainers: Trainer[] = [
     specialization: 'Strength & Conditioning',
     hireDate: '2022-03-15',
     clientCount: 28,
-    sessionsThisWeek: 15,
     rating: 4.9,
     clients: [
       {
@@ -52,9 +60,7 @@ export const mockTrainers: Trainer[] = [
         email: 'mike.a@email.com',
         phone: '(555) 234-5678',
         joinDate: '2024-01-10',
-        membershipType: 'Premium',
-        lastSession: '2024-10-08',
-        sessionsCompleted: 45
+        membershipType: 'Premium'
       },
       {
         id: 'C002',
@@ -62,9 +68,7 @@ export const mockTrainers: Trainer[] = [
         email: 'emily.d@email.com',
         phone: '(555) 345-6789',
         joinDate: '2024-02-20',
-        membershipType: 'VIP',
-        lastSession: '2024-10-09',
-        sessionsCompleted: 38
+        membershipType: 'VIP'
       },
       {
         id: 'C003',
@@ -72,9 +76,7 @@ export const mockTrainers: Trainer[] = [
         email: 'james.w@email.com',
         phone: '(555) 456-7890',
         joinDate: '2024-03-05',
-        membershipType: 'Premium',
-        lastSession: '2024-10-07',
-        sessionsCompleted: 32
+        membershipType: 'Premium'
       }
     ],
     reports: [
@@ -103,7 +105,6 @@ export const mockTrainers: Trainer[] = [
     specialization: 'HIIT & Cardio',
     hireDate: '2021-07-20',
     clientCount: 35,
-    sessionsThisWeek: 22,
     rating: 4.8,
     clients: [
       {
@@ -112,9 +113,7 @@ export const mockTrainers: Trainer[] = [
         email: 'lisa.t@email.com',
         phone: '(555) 567-8901',
         joinDate: '2023-11-15',
-        membershipType: 'Premium',
-        lastSession: '2024-10-09',
-        sessionsCompleted: 67
+        membershipType: 'Premium'
       },
       {
         id: 'C005',
@@ -122,9 +121,7 @@ export const mockTrainers: Trainer[] = [
         email: 'david.c@email.com',
         phone: '(555) 678-9012',
         joinDate: '2024-01-08',
-        membershipType: 'VIP',
-        lastSession: '2024-10-08',
-        sessionsCompleted: 52
+        membershipType: 'VIP'
       },
       {
         id: 'C006',
@@ -132,9 +129,7 @@ export const mockTrainers: Trainer[] = [
         email: 'rachel.g@email.com',
         phone: '(555) 789-0123',
         joinDate: '2024-04-12',
-        membershipType: 'Premium',
-        lastSession: '2024-09-20',
-        sessionsCompleted: 18
+        membershipType: 'Premium'
       }
     ],
     reports: [
@@ -162,7 +157,6 @@ export const mockTrainers: Trainer[] = [
     specialization: 'Yoga & Flexibility',
     hireDate: '2023-01-10',
     clientCount: 22,
-    sessionsThisWeek: 18,
     rating: 5.0,
     clients: [
       {
@@ -171,9 +165,7 @@ export const mockTrainers: Trainer[] = [
         email: 'sofia.m@email.com',
         phone: '(555) 890-1234',
         joinDate: '2024-05-22',
-        membershipType: 'Premium',
-        lastSession: '2024-10-09',
-        sessionsCompleted: 28
+        membershipType: 'Premium'
       },
       {
         id: 'C008',
@@ -181,9 +173,7 @@ export const mockTrainers: Trainer[] = [
         email: 'tom.b@email.com',
         phone: '(555) 901-2345',
         joinDate: '2024-06-15',
-        membershipType: 'Premium',
-        lastSession: '2024-10-06',
-        sessionsCompleted: 22
+        membershipType: 'Premium'
       },
       {
         id: 'C009',
@@ -191,8 +181,7 @@ export const mockTrainers: Trainer[] = [
         email: 'nina.p@email.com',
         phone: '(555) 012-3456',
         joinDate: '2024-10-08',
-        membershipType: 'Premium',
-        sessionsCompleted: 8
+        membershipType: 'Premium'
       }
     ],
     reports: [
@@ -221,7 +210,6 @@ export const mockTrainers: Trainer[] = [
     specialization: 'CrossFit & Functional Training',
     hireDate: '2022-09-05',
     clientCount: 31,
-    sessionsThisWeek: 20,
     rating: 4.7,
     clients: [
       {
@@ -230,9 +218,7 @@ export const mockTrainers: Trainer[] = [
         email: 'alex.t@email.com',
         phone: '(555) 123-4567',
         joinDate: '2023-12-10',
-        membershipType: 'VIP',
-        lastSession: '2024-10-09',
-        sessionsCompleted: 58
+        membershipType: 'VIP'
       },
       {
         id: 'C011',
@@ -240,9 +226,7 @@ export const mockTrainers: Trainer[] = [
         email: 'jessica.b@email.com',
         phone: '(555) 234-5678',
         joinDate: '2024-02-28',
-        membershipType: 'Premium',
-        lastSession: '2024-10-08',
-        sessionsCompleted: 41
+        membershipType: 'Premium'
       }
     ],
     reports: [
@@ -263,7 +247,6 @@ export const mockTrainers: Trainer[] = [
     specialization: 'Pilates & Core Training',
     hireDate: '2023-06-12',
     clientCount: 19,
-    sessionsThisWeek: 0,
     rating: 4.9,
     clients: [
       {
@@ -272,9 +255,7 @@ export const mockTrainers: Trainer[] = [
         email: 'oliver.w@email.com',
         phone: '(555) 345-6789',
         joinDate: '2024-07-10',
-        membershipType: 'Premium',
-        lastSession: '2024-09-28',
-        sessionsCompleted: 15
+        membershipType: 'Premium'
       }
     ],
     reports: [
@@ -315,3 +296,84 @@ export const getTrainerByClientId = (clientId: string): Trainer | undefined => {
     trainer.clients.some(client => client.id === clientId)
   );
 };
+
+// Mock Service Reports - Client complaints about trainers
+export const mockServiceReports: ServiceReport[] = [
+  {
+    id: 'SR001',
+    clientId: 'C006',
+    clientName: 'Rachel Green',
+    trainerId: 'T002',
+    trainerName: 'Marcus Rodriguez',
+    date: '2024-10-08',
+    category: 'late',
+    severity: 'medium',
+    description: 'Trainer arrived 20 minutes late to our scheduled session without prior notice. This has happened twice this month.'
+  },
+  {
+    id: 'SR002',
+    clientId: 'C003',
+    clientName: 'James Wilson',
+    trainerId: 'T001',
+    trainerName: 'Sarah Johnson',
+    date: '2024-10-05',
+    category: 'unprepared',
+    severity: 'low',
+    description: 'Session felt disorganized. Trainer seemed unsure of the workout plan and kept checking their phone.'
+  },
+  {
+    id: 'SR003',
+    clientId: 'C010',
+    clientName: 'Alex Turner',
+    trainerId: 'T004',
+    trainerName: 'Kevin Murphy',
+    date: '2024-10-01',
+    category: 'unprofessional',
+    severity: 'high',
+    description: 'Trainer made inappropriate comments about my fitness level that made me uncomfortable during the session.'
+  },
+  {
+    id: 'SR004',
+    clientId: 'C008',
+    clientName: 'Tom Bradley',
+    trainerId: 'T003',
+    trainerName: 'Amanda Lee',
+    date: '2024-09-28',
+    category: 'unprepared',
+    severity: 'low',
+    description: 'Trainer forgot to bring resistance bands that we had scheduled to use for our workout.'
+  },
+  {
+    id: 'SR005',
+    clientId: 'C011',
+    clientName: 'Jessica Brown',
+    trainerId: 'T004',
+    trainerName: 'Kevin Murphy',
+    date: '2024-10-09',
+    category: 'inappropriate',
+    severity: 'high',
+    description: 'Trainer pushed me to continue exercises despite me expressing pain and discomfort. Felt pressured and unsafe.'
+  },
+  {
+    id: 'SR006',
+    clientId: 'C004',
+    clientName: 'Lisa Thompson',
+    trainerId: 'T002',
+    trainerName: 'Marcus Rodriguez',
+    date: '2024-10-06',
+    category: 'late',
+    severity: 'low',
+    description: 'Trainer was 10 minutes late but did call ahead to inform me about the delay.'
+  },
+  {
+    id: 'SR007',
+    clientId: 'C007',
+    clientName: 'Sofia Martinez',
+    trainerId: 'T003',
+    trainerName: 'Amanda Lee',
+    date: '2024-10-07',
+    category: 'other',
+    severity: 'medium',
+    description: 'Trainer cancelled last minute (1 hour before) for the third time this month. This disrupts my schedule significantly.'
+  }
+];

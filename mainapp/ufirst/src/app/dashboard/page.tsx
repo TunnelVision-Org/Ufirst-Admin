@@ -28,8 +28,8 @@ export default function DashboardPage() {
       value: '8',
       description: '+3 from last week',
       icon: FileText,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
+      color: 'text-black-600',
+      bgColor: 'bg-green-50',
     },
     {
       title: 'Growth Rate',
