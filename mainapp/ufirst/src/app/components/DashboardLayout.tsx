@@ -20,6 +20,10 @@ export default function DashboardLayout({ children, userName = 'Admin' }: Dashbo
     router.push('/login');
   };
 
+  const handleAccountClick = () => {
+    router.push('/dashboard/account');
+  };
+
   return (
     <div className="min-h-screen flex bg-gray-50">
       <Sidebar userName={userName} />
@@ -29,6 +33,19 @@ export default function DashboardLayout({ children, userName = 'Admin' }: Dashbo
         {/* Top Bar */}
         <div className="flex justify-end items-center gap-4 mb-8">
           <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleAccountClick}
+            className="h-10 w-10 rounded-full hover:bg-gray-100"
+          >
+            <Avatar className="h-9 w-9">
+              <AvatarFallback className="bg-[#3C4526] text-white text-sm font-semibold">
+                {userName.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </Button>
+          
+          <Button
             onClick={handleLogout}
             variant="outline"
             className="bg-[#3C4526] text-white hover:bg-[#4a5530] hover:text-white border-none"
@@ -36,11 +53,6 @@ export default function DashboardLayout({ children, userName = 'Admin' }: Dashbo
             <LogOut className="h-4 w-4" />
             Logout
           </Button>
-          <Avatar>
-            <AvatarFallback className="bg-gray-300 text-gray-700">
-              {userName.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
         </div>
 
         {children}
