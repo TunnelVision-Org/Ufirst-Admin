@@ -20,6 +20,11 @@ export default function TrainersPage() {
   const [error, setError] = useState<string | null>(null);
   const [editingTrainerId, setEditingTrainerId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{name: string; specialization: string; email: string; phone: string} | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    trainer: Trainer | null;
+    isDeleting: boolean;
+  }>({ isOpen: false, trainer: null, isDeleting: false });
 
   // Fetch trainers on component mount
   useEffect(() => {
@@ -109,23 +114,53 @@ export default function TrainersPage() {
     setEditForm(null);
   };
 
-  const handleDelete = async (trainerId: string) => {
-    const trainer = trainers.find(t => t.id === trainerId);
+  const openDeleteConfirmation = (trainer: Trainer) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      trainer,
+      isDeleting: false,
+    });
+  };
+
+  const closeDeleteConfirmation = () => {
+    if (!deleteConfirmation.isDeleting) {
+      setDeleteConfirmation({
+        isOpen: false,
+        trainer: null,
+        isDeleting: false,
+      });
+    }
+  };
+
+  const handleDeleteConfirmed = async () => {
+    const trainer = deleteConfirmation.trainer;
     if (!trainer) return;
 
-    if (window.confirm(`Are you sure you want to delete trainer "${trainer.name}"? This action cannot be undone.`)) {
-      try {
-        await deleteTrainer(trainerId);
-        setTrainers(trainers.filter(t => t.id !== trainerId));
-        
-        // Remove associated reports
-        setReports(reports.filter(r => r.trainerId !== trainerId));
-        
-        alert('Trainer deleted successfully');
-      } catch (err) {
-        console.error('Error deleting trainer:', err);
-        alert(err instanceof Error ? err.message : 'Failed to delete trainer');
-      }
+    setDeleteConfirmation(prev => ({ ...prev, isDeleting: true }));
+
+    try {
+      await deleteTrainer(trainer.id);
+      
+      // Update local state
+      setTrainers(trainers.filter(t => t.id !== trainer.id));
+      
+      // Remove associated reports
+      setReports(reports.filter(r => r.trainerId !== trainer.id));
+      
+      // Close confirmation modal
+      setDeleteConfirmation({
+        isOpen: false,
+        trainer: null,
+        isDeleting: false,
+      });
+
+      // Show success message
+      alert(`Trainer "${trainer.name}" has been deleted successfully`);
+    } catch (err) {
+      console.error('Error deleting trainer:', err);
+      alert(err instanceof Error ? err.message : 'Failed to delete trainer');
+      
+      setDeleteConfirmation(prev => ({ ...prev, isDeleting: false }));
     }
   };
 
@@ -137,10 +172,8 @@ export default function TrainersPage() {
 
   const handleDeleteTrainerFromReport = (trainerId: string) => {
     const trainer = trainers.find(t => t.id === trainerId);
-    if (!trainer) return;
-
-    if (window.confirm(`Are you sure you want to DELETE trainer "${trainer.name}"? This will permanently remove the trainer and all their reports from the system. This action cannot be undone.`)) {
-      handleDelete(trainerId);
+    if (trainer) {
+      openDeleteConfirmation(trainer);
       setSelectedTrainerForReports(null);
     }
   };
@@ -224,10 +257,12 @@ export default function TrainersPage() {
                 className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-[#3C4526] w-64"
               />
             </div>
-            <Button className="bg-[#3C4526] hover:bg-[#7C3AED]">
+            {/* Add Trainer Button */}
+            {/* <Button className="bg-[#3C4526] hover:bg-[#7C3AED]">
               <Plus className="h-4 w-4 mr-2" />
               Add Trainer
-            </Button>
+            </Button> */}
+
           </div>
         </div>
 
@@ -457,6 +492,14 @@ export default function TrainersPage() {
                   >
                     View Reports ({reports.filter(r => r.trainerId === trainer.id).length})
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openDeleteConfirmation(trainer)}
+                    className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -642,6 +685,70 @@ export default function TrainersPage() {
                     </div>
                   );
                 })()}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteConfirmation.isOpen && deleteConfirmation.trainer && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={closeDeleteConfirmation}>
+            <Card className="w-full max-w-md bg-white" onClick={(e) => e.stopPropagation()}>
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
+                    <AlertTriangle className="h-6 w-6 text-red-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Delete Trainer</CardTitle>
+                    <CardDescription>This action cannot be undone</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Are you sure you want to delete{' '}
+                  <span className="font-semibold text-gray-900">{deleteConfirmation.trainer.name}</span>?
+                  This will permanently remove the trainer from the system along with all their associated data.
+                </p>
+
+                {deleteConfirmation.trainer.clientCount > 0 && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <p className="text-sm text-yellow-800">
+                      <strong>Warning:</strong> This trainer has{' '}
+                      <strong>{deleteConfirmation.trainer.clientCount} active client{deleteConfirmation.trainer.clientCount !== 1 ? 's' : ''}</strong>.
+                      Deleting them may affect those client relationships.
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={closeDeleteConfirmation}
+                    disabled={deleteConfirmation.isDeleting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                    onClick={handleDeleteConfirmed}
+                    disabled={deleteConfirmation.isDeleting}
+                  >
+                    {deleteConfirmation.isDeleting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Trainer
+                      </>
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
