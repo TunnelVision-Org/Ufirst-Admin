@@ -1,52 +1,111 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import DashboardLayout from '@/app/components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Avatar, AvatarFallback } from '@/app/components/ui/avatar';
-import { Plus, UserPlus, Users, TrendingUp, Award, Phone, Mail, MoreVertical, Search, X, Calendar, AlertTriangle, Clock, FileText, User, Trash2, Check } from 'lucide-react';
-import { mockTrainers, mockServiceReports, type Trainer } from '@/app/data/mockData';
+import { Plus, UserPlus, Users, TrendingUp, Award, Phone, Mail, MoreVertical, Search, X, Calendar, AlertTriangle, Clock, FileText, User, Trash2, Check, Star } from 'lucide-react';
+import { getAllTrainers, updateTrainer, deleteTrainer, getTrainerById, type Trainer, type TrainerWithDetails } from '@/lib/api/trainers';
+import { mockServiceReports } from '@/app/data/mockData';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
 
 export default function TrainersPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null);
+  const [selectedTrainer, setSelectedTrainer] = useState<TrainerWithDetails | null>(null);
   const [selectedTrainerForReports, setSelectedTrainerForReports] = useState<Trainer | null>(null);
   const [reports, setReports] = useState(mockServiceReports);
-  const [trainers, setTrainers] = useState(mockTrainers);
+  const [trainers, setTrainers] = useState<Trainer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [editingTrainerId, setEditingTrainerId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{name: string; specialization: string; email: string; phone: string} | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    trainer: Trainer | null;
+    isDeleting: boolean;
+  }>({ isOpen: false, trainer: null, isDeleting: false });
+
+  // Fetch trainers on component mount
+  useEffect(() => {
+    fetchTrainers();
+  }, []);
+
+  const fetchTrainers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getAllTrainers();
+      setTrainers(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load trainers');
+      console.error('Error fetching trainers:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredTrainers = trainers.filter(trainer =>
     trainer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     trainer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    trainer.specialization.toLowerCase().includes(searchQuery.toLowerCase())
+    (trainer.specialization && trainer.specialization.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const totalTrainers = trainers.length;
   const totalClients = trainers.reduce((sum, t) => sum + t.clientCount, 0);
-  const avgRating = (trainers.reduce((sum, t) => sum + t.rating, 0) / totalTrainers).toFixed(1);
+  const avgRating = totalTrainers > 0 
+    ? (trainers.reduce((sum, t) => sum + t.rating, 0) / totalTrainers).toFixed(1)
+    : '0.0';
+
+  const handleViewClients = async (trainer: Trainer) => {
+    try {
+      const trainerWithDetails = await getTrainerById(trainer.id);
+      setSelectedTrainer(trainerWithDetails);
+    } catch (err) {
+      console.error('Error fetching trainer details:', err);
+      alert('Failed to load trainer clients');
+    }
+  };
 
   const handleEdit = (trainer: Trainer) => {
     setEditingTrainerId(trainer.id);
     setEditForm({
       name: trainer.name,
-      specialization: trainer.specialization,
+      specialization: trainer.specialization || '',
       email: trainer.email,
-      phone: trainer.phone
+      phone: trainer.phone || '',
     });
   };
 
-  const handleSave = (trainerId: string) => {
-    if (editForm) {
+  const handleSave = async (trainerId: string) => {
+    if (!editForm) return;
+
+    try {
+      const trainer = trainers.find(t => t.id === trainerId);
+      if (!trainer) return;
+
+      const [firstName, ...lastNameParts] = editForm.name.split(' ');
+      const lastName = lastNameParts.join(' ');
+
+      await updateTrainer(trainerId, trainer.userId, {
+        firstName,
+        lastName,
+        email: editForm.email,
+      });
+
+      // Update local state
       setTrainers(trainers.map(t => 
         t.id === trainerId 
-          ? { ...t, name: editForm.name, specialization: editForm.specialization, email: editForm.email, phone: editForm.phone }
+          ? { ...t, name: editForm.name, email: editForm.email, firstName, lastName }
           : t
       ));
+
       setEditingTrainerId(null);
       setEditForm(null);
+      alert('Trainer updated successfully');
+    } catch (err) {
+      console.error('Error updating trainer:', err);
+      alert(err instanceof Error ? err.message : 'Failed to update trainer');
     }
   };
 
@@ -54,6 +113,129 @@ export default function TrainersPage() {
     setEditingTrainerId(null);
     setEditForm(null);
   };
+
+  const openDeleteConfirmation = (trainer: Trainer) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      trainer,
+      isDeleting: false,
+    });
+  };
+
+  const closeDeleteConfirmation = () => {
+    if (!deleteConfirmation.isDeleting) {
+      setDeleteConfirmation({
+        isOpen: false,
+        trainer: null,
+        isDeleting: false,
+      });
+    }
+  };
+
+  const handleDeleteConfirmed = async () => {
+    const trainer = deleteConfirmation.trainer;
+    if (!trainer) return;
+
+    setDeleteConfirmation(prev => ({ ...prev, isDeleting: true }));
+
+    try {
+      await deleteTrainer(trainer.id);
+      
+      // Update local state
+      setTrainers(trainers.filter(t => t.id !== trainer.id));
+      
+      // Remove associated reports
+      setReports(reports.filter(r => r.trainerId !== trainer.id));
+      
+      // Close confirmation modal
+      setDeleteConfirmation({
+        isOpen: false,
+        trainer: null,
+        isDeleting: false,
+      });
+
+      // Show success message
+      alert(`Trainer "${trainer.name}" has been deleted successfully`);
+    } catch (err) {
+      console.error('Error deleting trainer:', err);
+      alert(err instanceof Error ? err.message : 'Failed to delete trainer');
+      
+      setDeleteConfirmation(prev => ({ ...prev, isDeleting: false }));
+    }
+  };
+
+  const handleDismissReport = (reportId: string) => {
+    if (window.confirm('Are you sure you want to dismiss this report?')) {
+      setReports(reports.filter(r => r.id !== reportId));
+    }
+  };
+
+  const handleDeleteTrainerFromReport = (trainerId: string) => {
+    const trainer = trainers.find(t => t.id === trainerId);
+    if (trainer) {
+      openDeleteConfirmation(trainer);
+      setSelectedTrainerForReports(null);
+    }
+  };
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'late': return Clock;
+      case 'unprofessional': return AlertTriangle;
+      case 'unprepared': return FileText;
+      case 'inappropriate': return AlertTriangle;
+      default: return FileText;
+    }
+  };
+
+  const getCategoryLabel = (category: string) => {
+    const labels: Record<string, string> = {
+      'late': 'Late Arrival',
+      'unprofessional': 'Unprofessional',
+      'unprepared': 'Unprepared',
+      'inappropriate': 'Inappropriate Behavior',
+      'other': 'Other'
+    };
+    return labels[category] || category;
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'high': return 'bg-red-100 text-red-700 border-red-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'low': return 'bg-blue-100 text-blue-700 border-blue-200';
+      default: return 'bg-gray-100 text-gray-700 border-gray-200';
+    }
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout userName="Admin">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3C4526] mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading trainers...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout userName="Admin">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={fetchTrainers} className="bg-[#3C4526] hover:bg-[#2d331c]">
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout userName="Admin">
@@ -75,10 +257,12 @@ export default function TrainersPage() {
                 className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-[#3C4526] w-64"
               />
             </div>
-            <Button className="bg-[#3C4526] hover:bg-[#7C3AED]">
+            {/* Add Trainer Button */}
+            {/* <Button className="bg-[#3C4526] hover:bg-[#7C3AED]">
               <Plus className="h-4 w-4 mr-2" />
               Add Trainer
-            </Button>
+            </Button> */}
+
           </div>
         </div>
 
@@ -290,34 +474,13 @@ export default function TrainersPage() {
                   </div>
                 </div>
 
-                {/* Clients Preview */}
-                <div className="pt-2">
-                  <p className="text-xs text-gray-500 mb-2">Recent Clients</p>
-                  <div className="flex -space-x-2">
-                    {trainer.clients.slice(0, 5).map((client) => (
-                      <Avatar key={client.id} className="h-8 w-8 border-2 border-white">
-                        <AvatarFallback className="bg-gray-300 text-gray-700 text-xs">
-                          {client.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                    ))}
-                    {trainer.clients.length > 5 && (
-                      <div className="h-8 w-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center">
-                        <span className="text-xs text-gray-600 font-medium">
-                          +{trainer.clients.length - 5}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">
                   <Button 
                     variant="outline" 
                     className="flex-1" 
                     size="sm"
-                    onClick={() => setSelectedTrainer(trainer)}
+                    onClick={() => handleViewClients(trainer)}
                   >
                     View Clients
                   </Button>
@@ -328,6 +491,14 @@ export default function TrainersPage() {
                     onClick={() => setSelectedTrainerForReports(trainer)}
                   >
                     View Reports ({reports.filter(r => r.trainerId === trainer.id).length})
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openDeleteConfirmation(trainer)}
+                    className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
@@ -377,29 +548,15 @@ export default function TrainersPage() {
                           <div className="flex items-center gap-3">
                             <Avatar className="h-10 w-10">
                               <AvatarFallback className="bg-[#3C4526] text-white text-sm font-medium">
-                                {client.name.split(' ').map(n => n[0]).join('')}
+                                {client.name.split(' ').map((n: string) => n[0]).join('')}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-medium text-sm text-gray-900 truncate">{client.name}</h3>
-                                <span className={cn(
-                                  "text-[10px] px-1.5 py-0.5 rounded font-medium whitespace-nowrap",
-                                  client.membershipType === 'VIP' 
-                                    ? 'bg-[#3C4526] text-white' 
-                                    : 'bg-gray-100 text-gray-700'
-                                )}>
-                                  {client.membershipType}
-                                </span>
-                              </div>
+                              <h3 className="font-medium text-sm text-gray-900 truncate">{client.name}</h3>
                               <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
                                 <span className="flex items-center gap-1">
                                   <Mail className="h-3 w-3" />
                                   {client.email}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Phone className="h-3 w-3" />
-                                  {client.phone}
                                 </span>
                               </div>
                             </div>
@@ -429,53 +586,6 @@ export default function TrainersPage() {
               <CardContent className="p-4 overflow-y-auto max-h-[90vh]">
                 {(() => {
                   const trainerReports = reports.filter(r => r.trainerId === selectedTrainerForReports.id);
-                  
-                  const getCategoryIcon = (category: string) => {
-                    switch (category) {
-                      case 'late': return Clock;
-                      case 'unprofessional': return AlertTriangle;
-                      case 'unprepared': return FileText;
-                      case 'inappropriate': return AlertTriangle;
-                      default: return FileText;
-                    }
-                  };
-
-                  const getCategoryLabel = (category: string) => {
-                    const labels: Record<string, string> = {
-                      'late': 'Late Arrival',
-                      'unprofessional': 'Unprofessional',
-                      'unprepared': 'Unprepared',
-                      'inappropriate': 'Inappropriate Behavior',
-                      'other': 'Other'
-                    };
-                    return labels[category] || category;
-                  };
-
-                  const getSeverityColor = (severity: string) => {
-                    switch (severity) {
-                      case 'high': return 'bg-red-100 text-red-700 border-red-200';
-                      case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-                      case 'low': return 'bg-blue-100 text-blue-700 border-blue-200';
-                      default: return 'bg-gray-100 text-gray-700 border-gray-200';
-                    }
-                  };
-
-                  const handleDismissReport = (reportId: string) => {
-                    if (confirm('Are you sure you want to dismiss this report? This action cannot be undone.')) {
-                      setReports(reports.filter(r => r.id !== reportId));
-                    }
-                  };
-
-                  const handleDeleteTrainer = (reportId: string, trainerName: string) => {
-                    if (confirm(`Are you sure you want to DELETE trainer "${trainerName}"? This will permanently remove the trainer from the system. This action cannot be undone.`)) {
-                      const report = reports.find(r => r.id === reportId);
-                      if (report) {
-                        setReports(reports.filter(r => r.trainerId !== report.trainerId));
-                        setSelectedTrainerForReports(null);
-                        alert(`Trainer ${trainerName} has been deleted from the system.`);
-                      }
-                    }
-                  };
 
                   return trainerReports.length === 0 ? (
                     <div className="flex items-center justify-center py-16">
@@ -562,7 +672,7 @@ export default function TrainersPage() {
                                   size="sm" 
                                   variant="outline"
                                   className="flex-1 text-red-600 hover:bg-red-50 border-red-200 text-xs h-8"
-                                  onClick={() => handleDeleteTrainer(report.id, report.trainerName)}
+                                  onClick={() => handleDeleteTrainerFromReport(report.trainerId)}
                                 >
                                   <Trash2 className="h-3 w-3 mr-1" />
                                   Delete Trainer
@@ -575,6 +685,70 @@ export default function TrainersPage() {
                     </div>
                   );
                 })()}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteConfirmation.isOpen && deleteConfirmation.trainer && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={closeDeleteConfirmation}>
+            <Card className="w-full max-w-md bg-white" onClick={(e) => e.stopPropagation()}>
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
+                    <AlertTriangle className="h-6 w-6 text-red-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Delete Trainer</CardTitle>
+                    <CardDescription>This action cannot be undone</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Are you sure you want to delete{' '}
+                  <span className="font-semibold text-gray-900">{deleteConfirmation.trainer.name}</span>?
+                  This will permanently remove the trainer from the system along with all their associated data.
+                </p>
+
+                {deleteConfirmation.trainer.clientCount > 0 && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <p className="text-sm text-yellow-800">
+                      <strong>Warning:</strong> This trainer has{' '}
+                      <strong>{deleteConfirmation.trainer.clientCount} active client{deleteConfirmation.trainer.clientCount !== 1 ? 's' : ''}</strong>.
+                      Deleting them may affect those client relationships.
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={closeDeleteConfirmation}
+                    disabled={deleteConfirmation.isDeleting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                    onClick={handleDeleteConfirmed}
+                    disabled={deleteConfirmation.isDeleting}
+                  >
+                    {deleteConfirmation.isDeleting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Trainer
+                      </>
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
