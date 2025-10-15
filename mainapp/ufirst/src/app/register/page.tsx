@@ -18,12 +18,15 @@ export default function RegisterPage() {
   const handleSubmit = async(e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Validation to ensure that the passwords patch
-    setPasswordsDoNotMatch(password !== confirmPassword);
-
-    if (passwordsDoNotMatch){
+    // Validation to ensure that the passwords match
+    if (password !== confirmPassword) {
+      setPasswordsDoNotMatch(true);
       return;
     }
+    
+    setPasswordsDoNotMatch(false);
+
+    console.log('📝 [Register] Attempting signup with email:', email);
 
     try {
       const response = await fetch('/api/signup', {
@@ -34,14 +37,34 @@ export default function RegisterPage() {
         body: JSON.stringify({ firstName, lastName, email, password} )
       });
 
-      if (response.ok){
-        // TODO: Will need to add functionality here to customize the dashboard so that it points to the user not the admin by default
+      console.log('📡 [Register] Response status:', response.status);
+      console.log('📡 [Register] Response ok:', response.ok);
+
+      const data = await response.json();
+      console.log('📦 [Register] Response data:', data);
+
+      if (response.ok && data.success){
+        console.log('✅ [Register] Signup successful, storing user data');
+        
+        // Store user info in localStorage
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify({
+            id: data.user.id,
+            firstName: data.user.firstName,
+            lastName: data.user.lastName,
+            email: data.user.email,
+          }));
+        }
+        
+        console.log('✅ [Register] Redirecting to dashboard');
         router.push('/dashboard')
       } else {
-        console.error('Sign up error, something external, please check the values you entered');
+        console.error('❌ [Register] Signup failed:', data.error || data.errors || 'Unknown error');
+        alert(`Signup failed: ${data.error || 'Please check your information and try again.'}`);
       }
     } catch (error) {
-      console.error('Something went wrong, something internal, please try again later', error);
+      console.error('❌ [Register] Exception occurred:', error);
+      alert('An error occurred during signup. Please check the console for details.');
     }
   }
 

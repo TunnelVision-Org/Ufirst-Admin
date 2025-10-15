@@ -89,7 +89,7 @@ export default function AccountPage() {
                     <h2 className="text-xl font-bold text-gray-900 mb-1">{name}</h2>
                   )}
                   
-                  <p className="text-sm text-gray-500 mb-3">Administrator</p>
+                  <p className="text-sm text-black mb-3">Administrator</p>
                   
                   <div className="flex items-center gap-1 text-sm">
                     <span className="font-semibold text-gray-900">5.0</span>
@@ -134,7 +134,7 @@ export default function AccountPage() {
 
                 {/* Role Section */}
                 <div>
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                  <h3 className="text-xs font-semibold text-black uppercase tracking-wider mb-3">
                     ROLE
                   </h3>
                   <div className="space-y-2">
@@ -146,7 +146,7 @@ export default function AccountPage() {
 
                 {/* Skills Section */}
                 <div>
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                  <h3 className="text-xs font-semibold text-black uppercase tracking-wider mb-3">
                     PERMISSIONS
                   </h3>
                   <div className="space-y-1 text-sm text-gray-700">
@@ -182,14 +182,14 @@ export default function AccountPage() {
 
                 {/* Contact Information */}
                 <div className="mb-8">
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                  <h3 className="text-xs font-semibold text-black uppercase tracking-wider mb-4">
                     CONTACT INFORMATION
                   </h3>
                   
                   <div className="space-y-4">
                     {/* Email */}
                     <div>
-                      <label className="text-sm text-gray-500 mb-1 block">Email:</label>
+                      <label className="text-sm text-black mb-1 block">Email:</label>
                       {isEditing ? (
                         <input
                           type="email"
@@ -207,7 +207,7 @@ export default function AccountPage() {
 
                     {/* Site */}
                     <div>
-                      <label className="text-sm text-gray-500 mb-1 block">Site:</label>
+                      <label className="text-sm text-black mb-1 block">Site:</label>
                       <a href="https://ufirst.com" target="_blank" rel="noopener noreferrer" className="text-[#3C4526] hover:underline text-sm">
                         www.ufirst.com
                       </a>
@@ -217,25 +217,25 @@ export default function AccountPage() {
 
                 {/* Basic Information */}
                 <div>
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                  <h3 className="text-xs font-semibold text-black uppercase tracking-wider mb-4">
                     BASIC INFORMATION
                   </h3>
                   
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="text-gray-500">Account Created:</span>
+                      <span className="text-black">Account Created:</span>
                       <span className="text-gray-900 font-medium">January 15, 2024</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="text-gray-500">Role:</span>
+                      <span className="text-black">Role:</span>
                       <span className="text-gray-900 font-medium">Administrator</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="text-gray-500">Last Login:</span>
+                      <span className="text-black">Last Login:</span>
                       <span className="text-gray-900 font-medium">Today, {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     <div className="flex justify-between py-2">
-                      <span className="text-gray-500">Status:</span>
+                      <span className="text-black">Status:</span>
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         Active
                       </span>

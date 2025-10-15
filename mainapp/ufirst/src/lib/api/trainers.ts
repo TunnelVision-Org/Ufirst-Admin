@@ -24,6 +24,11 @@ export interface TrainerWithDetails extends Trainer {
     lastName: string;
     email: string;
     userId: string;
+    workoutCount: number;
+    mealPlanCount: number;
+    joinDate: string;
+    fitnessGoal?: string;
+    createdAt: string;
   }[];
 }
 
@@ -105,4 +110,23 @@ export async function deleteTrainer(id: string): Promise<void> {
     const error = await response.json();
     throw new Error(error.error || 'Failed to delete trainer');
   }
+}
+
+/**
+ * Fetch trainer by email with clients
+ */
+export async function getTrainerByEmail(email: string): Promise<TrainerWithDetails> {
+  const response = await fetch(`/api/trainers/getByEmail?email=${encodeURIComponent(email)}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch trainer');
+  }
+
+  return await response.json();
 }
