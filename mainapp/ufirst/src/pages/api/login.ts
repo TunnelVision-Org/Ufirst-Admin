@@ -1,17 +1,27 @@
 import { NextApiRequest, NextApiResponse } from "next";
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log('🔐 [API/Login] Login attempt received');
+  console.log('🔐 [API/Login] Method:', req.method);
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { email, password } = req.body;
 
+  console.log('🔐 [API/Login] Email:', email);
+  console.log('🔐 [API/Login] Password length:', password?.length);
+
   if (!email || !password) {
+    console.error('❌ [API/Login] Missing email or password');
     return res.status(400).json({ error: 'Email and password are required' });
   }
 
   try {
-    const response = await fetch('https://tunnel-vision-fitness--development.gadget.app/api/graphql', {
+    console.log('📡 [API/Login] Sending request to Gadget...');
+    
+    const response = await fetch('https://tunnel-vision-fitness--brokemybranch.gadget.app/api/graphql', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -24,6 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 id
                 firstName
                 lastName
+                email
                 }
                 errors{
                 message
@@ -36,15 +47,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }),
     });
 
+    console.log('📥 [API/Login] Gadget response status:', response.status);
+
     const result = await response.json();
+    console.log('📦 [API/Login] Gadget response:', JSON.stringify(result, null, 2));
+
+    if (result.data?.signInUser?.errors && result.data.signInUser.errors.length > 0) {
+      const errors = result.data.signInUser.errors;
+      console.error('❌ [API/Login] SignIn errors:', errors);
+      return res.status(401).json({ 
+        error: errors[0].message || 'Authentication failed',
+        errors: errors 
+      });
+    }
 
     if (result.data?.signInUser?.user) {
-      res.status(200).json(result.data.signInUser);
+      const user = result.data.signInUser.user;
+      console.log('✅ [API/Login] Login successful for:', user.email);
+      
+      res.status(200).json({
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+        }
+      });
     } else {
+      console.error('❌ [API/Login] No user returned from Gadget');
       res.status(401).json({ error: 'Invalid credentials' });
     }
   } catch (error) {
-    console.error('Sign-in error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('❌ [API/Login] Exception:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 }

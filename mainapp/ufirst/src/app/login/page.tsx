@@ -13,6 +13,9 @@ export default function LoginPage() {
 
   const handleSubmit = async(e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    console.log('🔐 [Login] Attempting login with email:', email);
+    
     try {
       const response = await fetch('/api/login', {
         method: 'POST',
@@ -22,13 +25,32 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password })
       });
 
-      if (response.ok){
+      console.log('📡 [Login] Response status:', response.status);
+      console.log('📡 [Login] Response ok:', response.ok);
+
+      const data = await response.json();
+      console.log('📦 [Login] Response data:', data);
+
+      if (response.ok && data.user){
+        console.log('✅ [Login] Login successful, storing user data');
+        
+        // Store user info in localStorage
+        localStorage.setItem('user', JSON.stringify({
+          id: data.user.id,
+          firstName: data.user.firstName,
+          lastName: data.user.lastName,
+          email: data.user.email,
+        }));
+        
+        console.log('✅ [Login] Redirecting to dashboard');
         router.push('/dashboard');
       } else {
-        console.error('Login error, something external, check your credentials');
+        console.error('❌ [Login] Login failed:', data.error || data.errors || 'Unknown error');
+        alert(`Login failed: ${data.error || 'Invalid credentials. Please check your email and password.'}`);
       }
     } catch (error) {
-      console.error('Login Error, something internal', error);
+      console.error('❌ [Login] Exception occurred:', error);
+      alert('An error occurred during login. Please check the console for details.');
     }
   };
   return (

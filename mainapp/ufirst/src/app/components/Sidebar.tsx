@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Menu, Users, UserCircle, FileText, X, Home } from 'lucide-react';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { cn } from '@/lib/utils';
+import { isCurrentUserAdmin } from '@/lib/auth';
 
 interface SidebarProps {
   userName?: string;
@@ -14,14 +15,22 @@ interface SidebarProps {
 
 export default function Sidebar({ userName = 'Admin' }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const pathname = usePathname();
 
-  const navItems = [
-    { name: 'Home', href: '/dashboard', icon: Home },
-    { name: 'Trainers', href: '/dashboard/trainers', icon: Users },
-    { name: 'Clients', href: '/dashboard/clients', icon: UserCircle },
-    { name: 'Reports', href: '/dashboard/reports', icon: FileText },
+  useEffect(() => {
+    setIsAdmin(isCurrentUserAdmin());
+  }, []);
+
+  const allNavItems = [
+    { name: 'Home', href: '/dashboard', icon: Home, adminOnly: false },
+    { name: 'Trainers', href: '/dashboard/trainers', icon: Users, adminOnly: true },
+    { name: 'Clients', href: '/dashboard/clients', icon: UserCircle, adminOnly: true },
+    { name: 'Reports', href: '/dashboard/reports', icon: FileText, adminOnly: true },
   ];
+
+  // Filter navigation items based on user role
+  const navItems = allNavItems.filter(item => !item.adminOnly || isAdmin);
 
   return (
     <aside 
@@ -70,7 +79,7 @@ export default function Sidebar({ userName = 'Admin' }: SidebarProps) {
         {!isCollapsed && (
           <div>
             <p className="text-sm font-semibold text-gray-900">{userName}</p>
-            <p className="text-xs text-gray-500">Administrator</p>
+            <p className="text-xs text-gray-500">{isAdmin ? 'Administrator' : 'Trainer'}</p>
           </div>
         )}
       </div>

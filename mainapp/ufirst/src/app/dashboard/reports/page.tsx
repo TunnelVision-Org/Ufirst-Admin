@@ -84,7 +84,7 @@ export default function ReportsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Service Reports</h1>
-            <p className="text-gray-500 mt-1">Client-submitted complaints about trainer service</p>
+            <p className="text-black mt-1">Client-submitted complaints about trainer service</p>
           </div>
         </div>
 
@@ -99,7 +99,7 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-gray-900">{totalReports}</div>
-              <p className="text-xs text-gray-500 mt-1">All complaints</p>
+              <p className="text-xs text-black mt-1">All complaints</p>
             </CardContent>
           </Card>
 
@@ -112,7 +112,7 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-red-600">{highSeverityReports}</div>
-              <p className="text-xs text-gray-500 mt-1">Urgent attention</p>
+              <p className="text-xs text-black mt-1">Urgent attention</p>
             </CardContent>
           </Card>
 
@@ -125,7 +125,7 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-yellow-600">{mediumSeverityReports}</div>
-              <p className="text-xs text-gray-500 mt-1">Should review</p>
+              <p className="text-xs text-black mt-1">Should review</p>
             </CardContent>
           </Card>
 
@@ -138,7 +138,7 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-blue-600">{lowSeverityReports}</div>
-              <p className="text-xs text-gray-500 mt-1">Minor issues</p>
+              <p className="text-xs text-black mt-1">Minor issues</p>
             </CardContent>
           </Card>
         </div>
@@ -160,7 +160,7 @@ export default function ReportsPage() {
                     placeholder="Search reports..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3C4526] w-full md:w-64"
+                    className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-black text-sm focus:outline-none focus:ring-2 focus:ring-[#3C4526] w-full md:w-64"
                   />
                 </div>
 
@@ -185,9 +185,9 @@ export default function ReportsPage() {
             {filteredReports.length === 0 ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
-                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <FileText className="h-12 w-12 text-black mx-auto mb-4" />
                   <p className="text-gray-600 font-medium mb-2">No reports found</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-black">
                     {searchQuery || filterSeverity !== 'all' 
                       ? 'Try adjusting your filters' 
                       : 'No service reports have been submitted yet'}

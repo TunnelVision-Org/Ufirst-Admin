@@ -4,8 +4,8 @@
  */
 
 const API_ENDPOINTS = {
-  development: 'https://tunnel-vision-fitness--nodshley-dev.gadget.app/api/graphql',
-  production: 'https://tunnel-vision-fitness--development.gadget.app/api/graphql',
+  development: 'https://tunnel-vision-fitness--brokemybranch.gadget.app/api/graphql',
+  production: 'https://tunnel-vision-fitness.gadget.app/api/graphql'
 };
 
 // Change this to switch between environments

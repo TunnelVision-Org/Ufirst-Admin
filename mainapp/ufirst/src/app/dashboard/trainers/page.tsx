@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 export default function TrainersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTrainer, setSelectedTrainer] = useState<TrainerWithDetails | null>(null);
+  const [loadingClients, setLoadingClients] = useState(false);
   const [selectedTrainerForReports, setSelectedTrainerForReports] = useState<Trainer | null>(null);
   const [reports, setReports] = useState(mockServiceReports);
   const [trainers, setTrainers] = useState<Trainer[]>([]);
@@ -59,11 +60,14 @@ export default function TrainersPage() {
 
   const handleViewClients = async (trainer: Trainer) => {
     try {
+      setLoadingClients(true);
       const trainerWithDetails = await getTrainerById(trainer.id);
       setSelectedTrainer(trainerWithDetails);
     } catch (err) {
       console.error('Error fetching trainer details:', err);
-      alert('Failed to load trainer clients');
+      alert(`Failed to load clients for ${trainer.name}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setLoadingClients(false);
     }
   };
 
@@ -244,7 +248,7 @@ export default function TrainersPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Trainers</h1>
-            <p className="text-gray-500 mt-1">Manage your fitness training staff</p>
+            <p className="text-black mt-1">Manage your fitness training staff</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="relative">
@@ -277,7 +281,7 @@ export default function TrainersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-gray-900">{totalTrainers}</div>
-              <p className="text-xs text-gray-500 mt-1">Active trainers</p>
+              <p className="text-xs text-black mt-1">Active trainers</p>
             </CardContent>
           </Card>
 
@@ -290,7 +294,7 @@ export default function TrainersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-gray-900">{totalClients}</div>
-              <p className="text-xs text-gray-500 mt-1">Across all trainers</p>
+              <p className="text-xs text-black mt-1">Across all trainers</p>
             </CardContent>
           </Card>
 
@@ -303,7 +307,7 @@ export default function TrainersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-gray-900">{Math.round(totalClients / totalTrainers)}</div>
-              <p className="text-xs text-gray-500 mt-1">Clients per trainer</p>
+              <p className="text-xs text-black mt-1">Clients per trainer</p>
             </CardContent>
           </Card>
 
@@ -316,7 +320,7 @@ export default function TrainersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-gray-900">{avgRating}</div>
-              <p className="text-xs text-gray-500 mt-1">Out of 5.0 stars</p>
+              <p className="text-xs text-black mt-1">Out of 5.0 stars</p>
             </CardContent>
           </Card>
         </div>
@@ -326,9 +330,9 @@ export default function TrainersPage() {
           <Card>
             <CardContent className="py-16">
               <div className="flex flex-col items-center justify-center text-center">
-                <Users className="h-16 w-16 text-gray-300 mb-4" />
+                <Users className="h-16 w-16 text-black mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">No trainers found</h3>
-                <p className="text-sm text-gray-500 mb-6 max-w-sm">
+                <p className="text-sm text-black mb-6 max-w-sm">
                   {searchQuery 
                     ? `No trainers match "${searchQuery}". Try adjusting your search.`
                     : 'Get started by adding your first trainer to the system.'
@@ -385,7 +389,7 @@ export default function TrainersPage() {
                       ) : (
                         <>
                           <h3 className="text-lg font-bold text-gray-900">{trainer.name}</h3>
-                          <p className="text-sm text-gray-500">{trainer.specialization}</p>
+                          <p className="text-sm text-black">{trainer.specialization}</p>
                         </>
                       )}
                     </div>
@@ -428,7 +432,7 @@ export default function TrainersPage() {
                   {isEditing ? (
                     <>
                       <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-gray-400" />
+                        <Mail className="h-4 w-4 text-black" />
                         <input
                           type="email"
                           value={editForm?.email || ''}
@@ -438,7 +442,7 @@ export default function TrainersPage() {
                         />
                       </div>
                       <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-gray-400" />
+                        <Phone className="h-4 w-4 text-black" />
                         <input
                           type="tel"
                           value={editForm?.phone || ''}
@@ -465,11 +469,11 @@ export default function TrainersPage() {
                 {/* Stats Row */}
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                   <div>
-                    <p className="text-xs text-gray-500">Clients</p>
+                    <p className="text-xs text-black">Clients</p>
                     <p className="text-xl font-bold text-gray-900">{trainer.clientCount}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Rating</p>
+                    <p className="text-xs text-black">Rating</p>
                     <p className="text-xl font-bold text-gray-900">{trainer.rating} ⭐</p>
                   </div>
                 </div>
@@ -509,56 +513,84 @@ export default function TrainersPage() {
         )}
 
         {/* Clients Modal */}
-        {selectedTrainer && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedTrainer(null)}>
+        {(selectedTrainer || loadingClients) && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => !loadingClients && setSelectedTrainer(null)}>
             <Card className="w-full max-w-2xl max-h-[85vh] overflow-hidden bg-[#F7F5ED]" onClick={(e) => e.stopPropagation()}>
               <CardHeader className="pb-3 pt-4 px-6 border-b bg-gradient-to-r from-[#3C4526] to-[#2d331c]">
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-lg font-semibold text-white">
-                      {selectedTrainer.name}'s Clients
+                      {loadingClients ? 'Loading...' : `${selectedTrainer?.name}'s Clients`}
                     </CardTitle>
                     <CardDescription className="text-white/80 text-xs mt-0.5">
-                      {selectedTrainer.clients.length} {selectedTrainer.clients.length === 1 ? 'client' : 'clients'}
+                      {loadingClients ? 'Fetching client data...' : `${selectedTrainer?.clients.length} ${selectedTrainer?.clients.length === 1 ? 'client' : 'clients'}`}
                     </CardDescription>
                   </div>
                   <Button 
                     variant="ghost" 
                     size="icon"
                     className="h-8 w-8 text-white hover:bg-white/20 -mr-2"
-                    onClick={() => setSelectedTrainer(null)}
+                    onClick={() => !loadingClients && setSelectedTrainer(null)}
+                    disabled={loadingClients}
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
               </CardHeader>
               <CardContent className="p-4 overflow-y-auto max-h-[calc(85vh-80px)]">
-                {selectedTrainer.clients.length === 0 ? (
+                {loadingClients ? (
                   <div className="flex items-center justify-center py-16">
                     <div className="text-center">
-                      <Users className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                      <p className="text-sm text-gray-500">No clients assigned</p>
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3C4526] mx-auto mb-4"></div>
+                      <p className="text-sm text-gray-600">Loading clients...</p>
+                    </div>
+                  </div>
+                ) : !selectedTrainer || selectedTrainer.clients.length === 0 ? (
+                  <div className="flex items-center justify-center py-16">
+                    <div className="text-center">
+                      <Users className="h-10 w-10 text-black mx-auto mb-3" />
+                      <p className="text-sm text-black">No clients assigned</p>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {selectedTrainer.clients.map((client) => (
                       <Card key={client.id} className="border border-gray-200 hover:border-[#3C4526] transition-colors bg-white">
-                        <CardContent className="p-3">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-10 w-10">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <Avatar className="h-12 w-12">
                               <AvatarFallback className="bg-[#3C4526] text-white text-sm font-medium">
                                 {client.name.split(' ').map((n: string) => n[0]).join('')}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-medium text-sm text-gray-900 truncate">{client.name}</h3>
-                              <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
+                              <h3 className="font-medium text-base text-gray-900">{client.name}</h3>
+                              <div className="flex items-center gap-2 mt-1.5 text-xs text-black">
                                 <span className="flex items-center gap-1">
                                   <Mail className="h-3 w-3" />
-                                  {client.email}
+                                  <span className="truncate">{client.email}</span>
                                 </span>
                               </div>
+                              <div className="flex gap-2 mt-3">
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                  <TrendingUp className="h-3 w-3" />
+                                  {client.workoutCount || 0} Workouts
+                                </span>
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                                  <FileText className="h-3 w-3" />
+                                  {client.mealPlanCount || 0} Meal Plan
+                                </span>
+                              </div>
+                              {client.joinDate && (
+                                <div className="flex items-center gap-1 mt-2 text-xs text-black">
+                                  <Calendar className="h-3 w-3" />
+                                  Joined {new Date(client.joinDate).toLocaleDateString('en-US', { 
+                                    month: 'short', 
+                                    day: 'numeric',
+                                    year: 'numeric' 
+                                  })}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </CardContent>
@@ -590,8 +622,8 @@ export default function TrainersPage() {
                   return trainerReports.length === 0 ? (
                     <div className="flex items-center justify-center py-16">
                       <div className="text-center">
-                        <FileText className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                        <p className="text-sm text-gray-500">No reports for this trainer</p>
+                        <FileText className="h-10 w-10 text-black mx-auto mb-3" />
+                        <p className="text-sm text-black">No reports for this trainer</p>
                       </div>
                     </div>
                   ) : (
@@ -600,7 +632,7 @@ export default function TrainersPage() {
                         <h3 className="text-lg font-semibold text-gray-900">
                           Reports for {selectedTrainerForReports.name}
                         </h3>
-                        <p className="text-sm text-gray-500">{trainerReports.length} {trainerReports.length === 1 ? 'report' : 'reports'}</p>
+                        <p className="text-sm text-black">{trainerReports.length} {trainerReports.length === 1 ? 'report' : 'reports'}</p>
                       </div>
                       {trainerReports.map((report) => {
                         const CategoryIcon = getCategoryIcon(report.category);

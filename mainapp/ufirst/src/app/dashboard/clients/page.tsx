@@ -4,42 +4,102 @@ import DashboardLayout from '@/app/components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Avatar, AvatarFallback } from '@/app/components/ui/avatar';
-import { UserCircle, Plus, Search, Phone, Mail, Calendar, TrendingUp, MoreVertical, Trash2, X, Check } from 'lucide-react';
-import { getAllClients } from '@/app/data/mockData';
+import { UserCircle, Plus, Search, Phone, Mail, Calendar, TrendingUp, MoreVertical, Trash2, X, Check, AlertTriangle } from 'lucide-react';
+import { getAllClients, updateClient, deleteClient, type ClientWithDetails } from '@/lib/api/clients';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState(getAllClients());
+  const [clients, setClients] = useState<ClientWithDetails[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingClientId, setEditingClientId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<{name: string; email: string; phone: string} | null>(null);
+  const [editForm, setEditForm] = useState<{name: string; email: string} | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    client: ClientWithDetails | null;
+    isDeleting: boolean;
+  }>({ isOpen: false, client: null, isDeleting: false });
 
-  const handleDeleteClient = (clientId: string, clientName: string) => {
-    if (confirm(`Are you sure you want to DELETE client "${clientName}"? This will permanently remove the client from the system. This action cannot be undone.`)) {
-      setClients(clients.filter(c => c.id !== clientId));
-      alert(`Client ${clientName} has been deleted from the system.`);
+  // Fetch clients on component mount
+  useEffect(() => {
+    fetchClients();
+  }, []);
+
+  const fetchClients = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getAllClients();
+      setClients(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load clients');
+      console.error('Error fetching clients:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleEdit = (client: typeof clients[0]) => {
+  const openDeleteConfirmation = (client: ClientWithDetails) => {
+    setDeleteConfirmation({ isOpen: true, client, isDeleting: false });
+  };
+
+  const closeDeleteConfirmation = () => {
+    if (!deleteConfirmation.isDeleting) {
+      setDeleteConfirmation({ isOpen: false, client: null, isDeleting: false });
+    }
+  };
+
+  const handleDeleteConfirmed = async () => {
+    if (!deleteConfirmation.client) return;
+
+    setDeleteConfirmation(prev => ({ ...prev, isDeleting: true }));
+
+    try {
+      await deleteClient(deleteConfirmation.client.id);
+      setClients(clients.filter(c => c.id !== deleteConfirmation.client!.id));
+      setDeleteConfirmation({ isOpen: false, client: null, isDeleting: false });
+    } catch (err) {
+      alert(`Failed to delete client: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setDeleteConfirmation(prev => ({ ...prev, isDeleting: false }));
+    }
+  };
+
+  const handleEdit = (client: ClientWithDetails) => {
     setEditingClientId(client.id);
     setEditForm({
       name: client.name,
       email: client.email,
-      phone: client.phone
     });
   };
 
-  const handleSave = (clientId: string) => {
-    if (editForm) {
+  const handleSave = async (clientId: string) => {
+    if (!editForm) return;
+
+    try {
+      const client = clients.find(c => c.id === clientId);
+      if (!client) return;
+
+      const [firstName, ...lastNameParts] = editForm.name.split(' ');
+      const lastName = lastNameParts.join(' ');
+
+      await updateClient(clientId, client.userId, {
+        firstName,
+        lastName,
+        email: editForm.email,
+      });
+
+      // Update local state
       setClients(clients.map(c => 
         c.id === clientId 
-          ? { ...c, name: editForm.name, email: editForm.email, phone: editForm.phone }
+          ? { ...c, name: editForm.name, email: editForm.email, firstName, lastName }
           : c
       ));
       setEditingClientId(null);
       setEditForm(null);
+    } catch (err) {
+      alert(`Failed to update client: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
@@ -51,20 +111,12 @@ export default function ClientsPage() {
   const filteredClients = clients.filter(client =>
     client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.trainer.name.toLowerCase().includes(searchQuery.toLowerCase())
+    (client.trainerName && client.trainerName.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const totalClients = clients.length;
-  const vipClients = clients.filter(c => c.membershipType === 'VIP').length;
-  const premiumClients = clients.filter(c => c.membershipType === 'Premium').length;
-
-  const getMembershipColor = (type: string) => {
-    switch (type) {
-      case 'VIP': return 'bg-purple-100 text-purple-700';
-      case 'Premium': return 'bg-blue-100 text-blue-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
-  };
+  const activeClients = clients.filter(c => c.workoutCount > 0 || c.mealPlanCount > 0).length;
+  const totalWorkouts = clients.reduce((sum, c) => sum + c.workoutCount, 0);
 
   return (
     <DashboardLayout userName="Admin">
@@ -73,12 +125,12 @@ export default function ClientsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Clients</h1>
-            <p className="text-gray-500 mt-1">Manage your fitness center members</p>
+            <p className="text-black mt-1">Manage your fitness center members</p>
           </div>
-          <Button className="bg-[#3C4526] hover:bg-[#2d331c]">
+          {/* <Button className="bg-[#3C4526] hover:bg-[#2d331c]">
             <Plus className="h-4 w-4 mr-2" />
             Add Client
-          </Button>
+          </Button> */}
         </div>
 
         {/* Stats */}
@@ -92,31 +144,31 @@ export default function ClientsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-gray-900">{totalClients}</div>
-              <p className="text-xs text-gray-500 mt-1">All members</p>
+              <p className="text-xs text-black mt-1">All members</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
-                VIP Members
+                Active Clients
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{vipClients}</div>
-              <p className="text-xs text-gray-500 mt-1">Premium tier</p>
+              <div className="text-3xl font-bold text-gray-900">{activeClients}</div>
+              <p className="text-xs text-black mt-1">With workouts/meals</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                Premium Members
+                Total Workouts
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{premiumClients}</div>
-              <p className="text-xs text-gray-500 mt-1">Standard tier</p>
+              <div className="text-3xl font-bold text-gray-900">{totalWorkouts}</div>
+              <p className="text-xs text-black mt-1">Across all clients</p>
             </CardContent>
           </Card>
         </div>
@@ -124,30 +176,48 @@ export default function ClientsPage() {
         {/* Clients List */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between text-black">
               <div>
                 <CardTitle>All Clients</CardTitle>
                 <CardDescription>A list of all members in your fitness center</CardDescription>
               </div>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black" />
                 <input
                   type="text"
                   placeholder="Search clients..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3C4526] w-64"
+                  className="pl-10 pr-4 py-2 text-black border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3C4526] w-64"
                 />
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            {filteredClients.length === 0 ? (
+            {loading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
-                  <UserCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3C4526] mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading clients...</p>
+                </div>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                  <p className="text-gray-600 font-medium mb-2">Failed to load clients</p>
+                  <p className="text-sm text-black mb-4">{error}</p>
+                  <Button onClick={fetchClients} variant="outline">
+                    Try Again
+                  </Button>
+                </div>
+              </div>
+            ) : filteredClients.length === 0 ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <UserCircle className="h-12 w-12 text-black mx-auto mb-4" />
                   <p className="text-gray-600 font-medium mb-2">No clients found</p>
-                  <p className="text-sm text-gray-500 mb-4">
+                  <p className="text-sm text-black mb-4">
                     {searchQuery ? 'Try adjusting your search' : 'Start by adding your first client'}
                   </p>
                   <Button variant="outline">
@@ -184,11 +254,11 @@ export default function ClientsPage() {
                               <>
                                 <h3 className="font-semibold text-gray-900">{client.name}</h3>
                                 <div className="flex gap-2 mt-1">
-                                  <span className={cn(
-                                    "text-xs px-2 py-0.5 rounded-full font-medium",
-                                    getMembershipColor(client.membershipType)
-                                  )}>
-                                    {client.membershipType}
+                                  <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">
+                                    {client.workoutCount} Workouts
+                                  </span>
+                                  <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700">
+                                    {client.mealPlanCount} Meals
                                   </span>
                                 </div>
                               </>
@@ -230,23 +300,13 @@ export default function ClientsPage() {
                         {isEditing ? (
                           <>
                             <div className="flex items-center gap-2">
-                              <Mail className="h-4 w-4 text-gray-400" />
+                              <Mail className="h-4 w-4 text-black" />
                               <input
                                 type="email"
                                 value={editForm?.email || ''}
                                 onChange={(e) => setEditForm(editForm ? {...editForm, email: e.target.value} : null)}
                                 className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
                                 placeholder="Email"
-                              />
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Phone className="h-4 w-4 text-gray-400" />
-                              <input
-                                type="tel"
-                                value={editForm?.phone || ''}
-                                onChange={(e) => setEditForm(editForm ? {...editForm, phone: e.target.value} : null)}
-                                className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
-                                placeholder="Phone"
                               />
                             </div>
                           </>
@@ -256,10 +316,6 @@ export default function ClientsPage() {
                               <Mail className="h-4 w-4" />
                               <span className="truncate">{client.email}</span>
                             </div>
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <Phone className="h-4 w-4" />
-                              <span>{client.phone}</span>
-                            </div>
                           </>
                         )}
                       </div>
@@ -268,22 +324,25 @@ export default function ClientsPage() {
                         <div className="flex items-center gap-2 mb-2">
                           <Avatar className="h-6 w-6">
                             <AvatarFallback className="bg-[#3C4526] text-white text-xs">
-                              {client.trainer.name.split(' ').map(n => n[0]).join('')}
+                              {client.trainerName ? client.trainerName.split(' ').map((n: string) => n[0]).join('') : '?'}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="text-xs text-gray-500">Trainer</p>
-                            <p className="text-sm font-medium text-gray-900">{client.trainer.name}</p>
+                            <p className="text-xs text-black">Trainer</p>
+                            <p className="text-sm font-medium text-gray-900">{client.trainerName || 'Unassigned'}</p>
                           </div>
                         </div>
-                        <p className="text-xs text-gray-500">{client.trainer.specialization}</p>
                       </div>
 
                       <div className="flex justify-between pt-3 border-t">
                         <div>
-                          <p className="text-xs text-gray-500">Joined</p>
+                          <p className="text-xs text-black">Weight Trends</p>
+                          <p className="text-sm font-medium text-gray-900">{client.weightTrendCount} records</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-black">Created</p>
                           <p className="text-sm font-medium text-gray-900">
-                            {new Date(client.joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                            {new Date(client.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                           </p>
                         </div>
                       </div>
@@ -296,7 +355,7 @@ export default function ClientsPage() {
                           variant="outline" 
                           className="flex-1 text-red-600 hover:bg-red-50 border-red-200" 
                           size="sm"
-                          onClick={() => handleDeleteClient(client.id, client.name)}
+                          onClick={() => openDeleteConfirmation(client)}
                         >
                           <Trash2 className="h-4 w-4 mr-1" />
                           Delete
@@ -310,6 +369,69 @@ export default function ClientsPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Delete Confirmation Modal */}
+        {deleteConfirmation.isOpen && deleteConfirmation.client && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Delete Client</h3>
+                  <p className="text-sm text-black">This action cannot be undone</p>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-sm text-gray-700 mb-2">
+                  Are you sure you want to delete{' '}
+                  <span className="font-semibold">{deleteConfirmation.client.name}</span>?
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
+                  <p className="text-sm text-red-800">
+                    <strong>Warning:</strong> This will permanently delete:
+                  </p>
+                  <ul className="text-sm text-red-700 mt-2 ml-4 list-disc space-y-1">
+                    <li>Client profile and account</li>
+                    <li>{deleteConfirmation.client.workoutCount} workout records</li>
+                    <li>{deleteConfirmation.client.mealPlanCount} meal plans</li>
+                    <li>{deleteConfirmation.client.weightTrendCount} weight trend entries</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={closeDeleteConfirmation}
+                  disabled={deleteConfirmation.isDeleting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                  onClick={handleDeleteConfirmed}
+                  disabled={deleteConfirmation.isDeleting}
+                >
+                  {deleteConfirmation.isDeleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Client
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

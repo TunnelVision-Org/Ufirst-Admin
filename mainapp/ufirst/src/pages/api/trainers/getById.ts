@@ -25,24 +25,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             },
             body: JSON.stringify({
                 query: `
-                    query GetTrainerById($id: ID!) {
+                    query GetTrainerById($id: GadgetID!) {
                         trainer(id: $id) {
                             id
+                            userId
                             user {
                                 id
                                 firstName
                                 lastName
                                 email
-                            }
-                            workout {
-                                id
-                            }
-                            mealPlan {
-                                edges {
-                                    node {
-                                        id
-                                    }
-                                }
                             }
                             client {
                                 edges {
@@ -54,6 +45,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                             lastName
                                             email
                                         }
+                                        workouts {
+                                            edges {
+                                                node {
+                                                    id
+                                                }
+                                            }
+                                        }
+                                        mealPlan {
+                                            id
+                                        }
+                                        createdAt
                                     }
                                 }
                             }
@@ -68,25 +70,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const result = await response.json();
 
+        if (result.errors) {
+            console.error('❌ [trainers/getById] GraphQL errors:', result.errors);
+            return res.status(400).json({ error: 'GraphQL errors', details: result.errors });
+        }
+
         if (result.data?.trainer) {
             const trainerData = result.data.trainer;
             const trainer = {
                 id: trainerData.id,
+                userId: trainerData.userId,
                 name: `${trainerData.user?.firstName || ''} ${trainerData.user?.lastName || ''}`.trim(),
                 firstName: trainerData.user?.firstName,
                 lastName: trainerData.user?.lastName,
                 email: trainerData.user?.email,
-                userId: trainerData.user?.id,
-                workoutId: trainerData.workout?.id,
-                mealPlans: trainerData.mealPlan?.edges?.map((e: any) => e.node) || [],
-                clients: trainerData.client?.edges?.map((e: any) => ({
-                    id: e.node.id,
-                    name: `${e.node.user?.firstName || ''} ${e.node.user?.lastName || ''}`.trim(),
-                    firstName: e.node.user?.firstName,
-                    lastName: e.node.user?.lastName,
-                    email: e.node.user?.email,
-                    userId: e.node.user?.id,
-                })) || [],
+                clients: trainerData.client?.edges?.map((e: any) => {
+                    const clientNode = e.node;
+                    return {
+                        id: clientNode.id,
+                        name: `${clientNode.user?.firstName || ''} ${clientNode.user?.lastName || ''}`.trim(),
+                        firstName: clientNode.user?.firstName,
+                        lastName: clientNode.user?.lastName,
+                        email: clientNode.user?.email,
+                        userId: clientNode.user?.id,
+                        workoutCount: clientNode.workouts?.edges?.length || 0,
+                        mealPlanCount: clientNode.mealPlan ? 1 : 0,
+                        joinDate: clientNode.createdAt,
+                    };
+                }) || [],
+                clientCount: trainerData.client?.edges?.length || 0,
                 hireDate: trainerData.createdAt,
                 createdAt: trainerData.createdAt,
                 updatedAt: trainerData.updatedAt,
@@ -95,8 +107,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 rating: 0,
             };
 
+            console.log('✅ [trainers/getById] Trainer found with', trainer.clientCount, 'clients');
             res.status(200).json({ success: true, trainer });
         } else {
+            console.log('❌ [trainers/getById] Trainer not found');
             res.status(404).json({ error: "Trainer not found" });
         }
     } catch (error) {
