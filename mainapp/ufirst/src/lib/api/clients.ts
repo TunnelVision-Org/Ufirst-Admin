@@ -34,8 +34,16 @@ export async function getAllClients(): Promise<ClientWithDetails[]> {
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to fetch clients');
+    let errorMessage = 'Failed to fetch clients';
+    try {
+      const error = await response.json();
+      if (error && error.error){
+        errorMessage = error.error;
+      }
+    } catch (e) {
+
+    }
+    throw new Error(errorMessage);
   }
 
   const data = await response.json();

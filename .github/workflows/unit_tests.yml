@@ -1,0 +1,35 @@
+name: Run API Unit Tests
+
+on:
+  push:
+    branches:
+      - main
+    pull_request:
+      branches:
+        - main
+
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      # Set up Node.js environment
+      - name: Setup Node.js 
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+          cache: 'npm'
+      
+      # Install dependencies
+      - name: Install dependencies
+        run: npm install
+      
+
+      # Run unit tests 
+      - name: Run tests 
+        run: npm test
