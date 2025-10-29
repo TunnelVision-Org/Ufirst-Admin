@@ -26,7 +26,8 @@ jobs:
 
       # Install dependencies
       - name: Install dependencies
-        run: cd mainapp/ufirst/ | npm install
+        working-directory: ./mainapp/ufirst
+        run: npm install
       
 
       # Run unit tests 
