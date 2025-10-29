@@ -32,4 +32,5 @@ jobs:
 
       # Run unit tests 
       - name: Run tests 
+        working-directory: ./mainapp/ufirst
         run: npm test
