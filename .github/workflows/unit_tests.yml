@@ -24,10 +24,9 @@ jobs:
         with:
           node-version: 22
 
-      - name: Change directory
-        run: cd mainapp/ufirst
       # Install dependencies
       - name: Install dependencies
+        run: ls -la
         run: npm install
       
 
