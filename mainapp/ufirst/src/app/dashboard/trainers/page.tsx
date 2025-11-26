@@ -376,13 +376,14 @@ export default function TrainersPage() {
                             value={editForm?.name || ''}
                             onChange={(e) => setEditForm(editForm ? {...editForm, name: e.target.value} : null)}
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
+                           
                             placeholder="Name"
                           />
                           <input
-                            type="text"
-                            value={editForm?.specialization || ''}
-                            onChange={(e) => setEditForm(editForm ? {...editForm, specialization: e.target.value} : null)}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
+                              type="text" 
+                              value={editForm?.specialization || ''}
+                              onChange={(e) => setEditForm(editForm ? {...editForm, specialization: e.target.value} : null)}
+                              className="w-full px-2 py-1 text-xs text-black border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
                             placeholder="Specialization"
                           />
                         </div>
@@ -437,7 +438,7 @@ export default function TrainersPage() {
                           type="email"
                           value={editForm?.email || ''}
                           onChange={(e) => setEditForm(editForm ? {...editForm, email: e.target.value} : null)}
-                          className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
+                          className="flex-1 px-2 py-1 text-sm text-black border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
                           placeholder="Email"
                         />
                       </div>
@@ -447,7 +448,7 @@ export default function TrainersPage() {
                           type="tel"
                           value={editForm?.phone || ''}
                           onChange={(e) => setEditForm(editForm ? {...editForm, phone: e.target.value} : null)}
-                          className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
+                          className="flex-1 px-2 py-1 text-sm text-black border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
                           placeholder="Phone"
                         />
                       </div>

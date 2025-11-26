@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import DashboardLayout from '../components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
-import { Users, UserCircle, FileText, TrendingUp, AlertTriangle, Mail, Calendar, Dumbbell } from 'lucide-react';
+import ClientCard from '../components/ClientCard';
+import { Users, UserCircle, FileText, TrendingUp, AlertTriangle, Mail, Dumbbell } from 'lucide-react';
 import { getAllTrainers } from '@/lib/api/trainers';
 import { getAllClients } from '@/lib/api/clients';
 import { getTrainerByEmail } from '@/lib/api/trainers';
@@ -106,7 +107,7 @@ export default function DashboardPage() {
         value: loading ? '...' : dashboardData.totalTrainers.toString(),
         description: `Avg ${dashboardData.avgClientsPerTrainer} clients each`,
         icon: Users,
-        color: 'text-blue-600',
+        color: 'text-gray-600',
         bgColor: 'bg-blue-50',
       },
       {
@@ -200,7 +201,7 @@ export default function DashboardPage() {
                     stat.value
                   )}
                 </div>
-                <CardDescription className="text-xs mt-1">
+                <CardDescription className="text-xs mt-1 text-black">
                   {stat.description}
                 </CardDescription>
               </CardContent>
@@ -213,7 +214,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-xl text-gray-900">Quick Actions</CardTitle>
-            <CardDescription className='text-gray-900'>Manage your fitness center efficiently</CardDescription>
+            <CardDescription className='text-black'>Manage your fitness center efficiently</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -316,50 +317,7 @@ export default function DashboardPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {trainerData.clients.map((client) => (
-              <Card key={client.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4 mb-4">
-                    <Avatar className="h-14 w-14">
-                      <AvatarFallback className="bg-[#3C4526] text-white text-lg font-medium">
-                        {client.name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-lg text-gray-900 truncate">{client.name}</h3>
-                      <div className="flex items-center gap-2 mt-1 text-sm text-black">
-                        <Mail className="h-3 w-3" />
-                        <span className="truncate">{client.email}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {client.fitnessGoal && (
-                    <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                      <p className="text-xs text-black font-medium mb-1">Fitness Goal:</p>
-                      <p className="text-sm text-gray-900">{client.fitnessGoal}</p>
-                    </div>
-                  )}
-
-                  <div className="flex gap-2 mb-4">
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                      <Dumbbell className="h-3 w-3" />
-                      {client.workoutCount} Workouts
-                    </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                      <FileText className="h-3 w-3" />
-                      {client.mealPlanCount} Meal Plan
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-3 border-t text-xs text-black">
-                    <Calendar className="h-3 w-3" />
-                    Joined {new Date(client.createdAt).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      year: 'numeric' 
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
+              <ClientCard key={client.id} client={client} />
             ))}
           </div>
         </div>
