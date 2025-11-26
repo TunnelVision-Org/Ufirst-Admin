@@ -376,13 +376,14 @@ export default function TrainersPage() {
                             value={editForm?.name || ''}
                             onChange={(e) => setEditForm(editForm ? {...editForm, name: e.target.value} : null)}
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
+                           
                             placeholder="Name"
                           />
                           <input
-                            type="text"
-                            value={editForm?.specialization || ''}
-                            onChange={(e) => setEditForm(editForm ? {...editForm, specialization: e.target.value} : null)}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
+                              type="text" 
+                              value={editForm?.specialization || ''}
+                              onChange={(e) => setEditForm(editForm ? {...editForm, specialization: e.target.value} : null)}
+                              className="w-full px-2 py-1 text-xs text-black border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
                             placeholder="Specialization"
                           />
                         </div>
@@ -437,7 +438,7 @@ export default function TrainersPage() {
                           type="email"
                           value={editForm?.email || ''}
                           onChange={(e) => setEditForm(editForm ? {...editForm, email: e.target.value} : null)}
-                          className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
+                          className="flex-1 px-2 py-1 text-sm text-black border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
                           placeholder="Email"
                         />
                       </div>
@@ -447,7 +448,7 @@ export default function TrainersPage() {
                           type="tel"
                           value={editForm?.phone || ''}
                           onChange={(e) => setEditForm(editForm ? {...editForm, phone: e.target.value} : null)}
-                          className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
+                          className="flex-1 px-2 py-1 text-sm text-black border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
                           placeholder="Phone"
                         />
                       </div>
@@ -555,53 +556,45 @@ export default function TrainersPage() {
                 ) : (
                   <div className="space-y-3">
                     {selectedTrainer.clients.map((client) => (
-                      <Card key={client.id} className="border border-gray-200 hover:border-[#3C4526] transition-colors bg-[#F7F5ED] rounded-lg overflow-hidden">
-                        <div className="flex flex-col sm:flex-row items-stretch">
-                          {/* Avatar column */}
-                          <div className="flex items-center justify-center sm:justify-start p-6 bg-white sm:w-40">
-                            <Avatar className="h-28 w-28">
-                              <AvatarFallback className="bg-[#3C4526] text-white text-2xl font-semibold">
+                      <Card key={client.id} className="border border-gray-200 hover:border-[#3C4526] transition-colors bg-white">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <Avatar className="h-12 w-12">
+                              <AvatarFallback className="bg-[#3C4526] text-white text-sm font-medium">
                                 {client.name.split(' ').map((n: string) => n[0]).join('')}
                               </AvatarFallback>
                             </Avatar>
-                          </div>
-
-                          {/* Content column */}
-                          <div className="flex-1 p-6">
-                            {/* Top tab-like nav (visual only) */}
-                            <div className="mb-4">
-                              <nav className="inline-flex rounded-t-lg overflow-hidden border border-gray-200 bg-white">
-                                <button className="px-4 py-2 text-sm bg-white text-gray-800">Info</button>
-                                <button className="px-4 py-2 text-sm bg-white text-gray-800">Meal Plans</button>
-                                <button className="px-4 py-2 text-sm bg-white text-gray-800">Today's Workout</button>
-                                <button className="px-4 py-2 text-sm bg-white text-gray-800">Weight Trends</button>
-                              </nav>
-                            </div>
-
-                            {/* Main centered name */}
-                            <div className="flex items-center justify-center sm:justify-start">
-                              <h3 className="text-3xl sm:text-2xl font-bold text-gray-900">{client.name}</h3>
-                            </div>
-
-                            {/* Secondary metadata row (kept subtle) */}
-                            <div className="mt-4 flex flex-wrap gap-3 items-center justify-center sm:justify-start text-sm text-gray-700">
-                              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-700">
-                                <TrendingUp className="h-3 w-3" />
-                                {client.workoutCount || 0} Workouts
-                              </span>
-                              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-700">
-                                <FileText className="h-3 w-3" />
-                                {client.mealPlanCount || 0} Meal Plans
-                              </span>
-                              {client.joinDate && (
-                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gray-100 text-gray-700">
-                                  <Calendar className="h-3 w-3" />
-                                  Joined {new Date(client.joinDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-base text-gray-900">{client.name}</h3>
+                              <div className="flex items-center gap-2 mt-1.5 text-xs text-black">
+                                <span className="flex items-center gap-1">
+                                  <Mail className="h-3 w-3" />
+                                  <span className="truncate">{client.email}</span>
                                 </span>
+                              </div>
+                              <div className="flex gap-2 mt-3">
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                  <TrendingUp className="h-3 w-3" />
+                                  {client.workoutCount || 0} Workouts
+                                </span>
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                                  <FileText className="h-3 w-3" />
+                                  {client.mealPlanCount || 0} Meal Plan
+                                </span>
+                              </div>
+                              {client.joinDate && (
+                                <div className="flex items-center gap-1 mt-2 text-xs text-black">
+                                  <Calendar className="h-3 w-3" />
+                                  Joined {new Date(client.joinDate).toLocaleDateString('en-US', { 
+                                    month: 'short', 
+                                    day: 'numeric',
+                                    year: 'numeric' 
+                                  })}
+                                </div>
                               )}
                             </div>
                           </div>
-                        </div>
+                        </CardContent>
                       </Card>
                     ))}
                   </div>

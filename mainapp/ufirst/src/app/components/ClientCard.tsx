@@ -1,11 +1,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
-import { Mail, Calendar, Dumbbell, FileText, X, Plus } from 'lucide-react';
+import { Mail, Dumbbell, FileText, X, Plus } from 'lucide-react';
 import { Button } from './ui/button';
 import type { ClientWithDetails } from '@/lib/api/clients';
 
 type TabKey = 'info' | 'mealPlans' | 'workout' | 'weightTrends';
+
+// Helper to safely parse exercises - handles both JSON strings and arrays
+function parseExercises(exercises: unknown): Array<{ reps?: number; sets?: number; weight?: number; name?: string }> {
+  if (!exercises) return [];
+  if (Array.isArray(exercises)) return exercises;
+  if (typeof exercises === 'string') {
+    try {
+      const parsed = JSON.parse(exercises);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
 
 export default function ClientCard({ client }: { client: Partial<ClientWithDetails> }) {
   const [activeTab, setActiveTab] = useState<TabKey>('info');
@@ -33,12 +48,12 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
   const [mealPlansDeletingId, setMealPlansDeletingId] = useState<string | null>(null);
   // Workout modal state
   const [showWorkoutModal, setShowWorkoutModal] = useState(false);
-  const [workouts, setWorkouts] = useState<Array<{ id: string; name: string; completed?: boolean; dueDate?: string; exercises?: Array<{ reps?: number; sets?: number; weight?: number; name?: string }> }>>(() => {
+  const [workouts, setWorkouts] = useState<Array<{ id: string; name: string; completed?: boolean; exercises?: Array<{ reps?: number; sets?: number; weight?: number; name?: string }> }>>(() => {
     const seed = (client as any).mockWorkouts as any[] | undefined;
-    if (seed && Array.isArray(seed)) return seed.map((w, i) => ({ id: w.id ?? `w${i+1}`, name: w.name ?? `Workout ${i+1}`, completed: !!w.completed, dueDate: w.dueDate, exercises: w.exercises }));
+    if (seed && Array.isArray(seed)) return seed.map((w, i) => ({ id: w.id ?? `w${i+1}`, name: w.name ?? `Workout ${i+1}`, completed: !!w.completed, exercises: w.exercises }));
     return [];
   });
-  const [editingWorkout, setEditingWorkout] = useState<{ id?: string; name: string; completed?: boolean; dueDate?: string; exercises?: Array<{ reps?: number; sets?: number; weight?: number; name?: string }> } | null>(null);
+  const [editingWorkout, setEditingWorkout] = useState<{ id?: string; name: string; completed?: boolean; exercises?: Array<{ reps?: number; sets?: number; weight?: number; name?: string }> } | null>(null);
   const [confirmDeleteWorkoutId, setConfirmDeleteWorkoutId] = useState<string | null>(null);
   const [workoutsLoading, setWorkoutsLoading] = useState(false);
   const [workoutsError, setWorkoutsError] = useState<string | null>(null);
@@ -84,7 +99,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
         setWorkoutsError(String(message));
         setWorkouts([]);
       } else {
-        setWorkouts((json.workouts || []).map((w: any) => ({ id: w.id, name: w.name, completed: w.completed, dueDate: w.dueDate, exercises: w.exercises })));
+        setWorkouts((json.workouts || []).map((w: any) => ({ id: w.id, name: w.name, completed: w.completed, exercises: w.exercises })));
       }
     } catch (err) {
       setWorkoutsError(err instanceof Error ? err.message : 'Unknown error');
@@ -97,13 +112,24 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
     if (showWorkoutModal) fetchWorkouts();
   }, [showWorkoutModal, fetchWorkouts]);
 
-  const createOrUpdateWorkout = async (workout: { id?: string; name: string; completed?: boolean; dueDate?: string; exercises?: any[] }) => {
-    if (!client?.id) return;
-    if (!workout.name || workout.name.trim() === '') return;
+  const createOrUpdateWorkout = async (workout: { id?: string; name: string; completed?: boolean; exercises?: any[] }): Promise<boolean> => {
+    if (!client?.id) {
+      const msg = 'Missing client id when saving workout';
+      console.error('[ClientCard] ' + msg, { client });
+      setWorkoutsError(msg);
+      return false;
+    }
+    if (!workout.name || workout.name.trim() === '') {
+      const msg = 'Workout name is required';
+      console.warn('[ClientCard] ' + msg);
+      setWorkoutsError(msg);
+      return false;
+    }
     setWorkoutsSaving(true);
     setWorkoutsError(null);
     try {
       const url = workout.id ? '/api/workouts/update' : '/api/workouts/create';
+      console.debug('[ClientCard] Saving workout', { url, workout, clientId: client.id });
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -111,7 +137,6 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
           id: workout.id,
           name: workout.name,
           exercises: workout.exercises,
-          dueDate: workout.dueDate,
           completed: workout.completed,
           clientId: client.id,
           trainerId: (client as any).trainerId ?? (client as any).trainer?.id ?? undefined,
@@ -119,13 +144,19 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
       });
       const json = await res.json();
       if (!res.ok || !json?.success) {
-        setWorkoutsError(json?.error ?? json?.message ?? `Save failed (${res.status})`);
-        return;
+        const msg = json?.error ?? json?.message ?? `Save failed (${res.status})`;
+        console.error('[ClientCard] save failed', { msg, json });
+        setWorkoutsError(msg);
+        return false;
       }
       // refresh list
       await fetchWorkouts();
+      return true;
     } catch (err) {
-      setWorkoutsError(err instanceof Error ? err.message : 'Unknown error');
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      console.error('[ClientCard] createOrUpdateWorkout error', err);
+      setWorkoutsError(msg);
+      return false;
     } finally {
       setWorkoutsSaving(false);
     }
@@ -359,9 +390,9 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
               return (
                 <div className="mt-4 p-3 border border-gray-100 rounded bg-white">
                   <label className="block text-xs text-gray-700">Name</label>
-                  <input autoFocus value={ep.name} onChange={(e) => setEditingPlan({ ...ep, name: e.target.value })} className="w-full mt-1 p-2 border rounded text-sm" />
+                  <input autoFocus value={ep.name} onChange={(e) => setEditingPlan({ ...ep, name: e.target.value })} className="w-full mt-1 p-2 border rounded text-sm text-black" />
                   <label className="block text-xs text-gray-700 mt-2">Description</label>
-                  <textarea value={ep.description} onChange={(e) => setEditingPlan({ ...ep, description: e.target.value })} className="w-full mt-1 p-2 border rounded text-sm" rows={4}></textarea>
+                  <textarea value={ep.description} onChange={(e) => setEditingPlan({ ...ep, description: e.target.value })} className="w-full mt-1 p-2 border rounded text-sm text-black" rows={4}></textarea>
                   <div className="mt-3 flex gap-2 justify-end">
                     <Button variant="outline" onClick={() => setEditingPlan(null)} disabled={mealPlansSaving}>Cancel</Button>
                     <Button onClick={async () => {
@@ -407,7 +438,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
             <div className="mb-4 flex items-center justify-between">
               <div className="text-sm text-gray-700">Manage workouts for this client.</div>
               <div>
-                <Button className="bg-[#3C4526] text-white" onClick={() => setEditingWorkout({ name: '', completed: false, dueDate: undefined, exercises: [] })}>
+                <Button className="bg-[#3C4526] text-white" onClick={() => setEditingWorkout({ name: '', completed: false, exercises: [] })}>
                   <Plus className="h-4 w-4 mr-2" /> New Workout
                 </Button>
               </div>
@@ -427,12 +458,11 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <h4 className="font-semibold text-gray-900">{w.name}</h4>
-                          <div className="text-xs text-gray-600 mt-1">Due: {w.dueDate ? new Date(w.dueDate).toLocaleString() : 'No due date'}</div>
                           <div className="text-xs text-gray-600 mt-1">{w.completed ? 'Completed' : 'Pending'}</div>
                           <div className="mt-2 text-sm text-gray-700">
-                            {w.exercises && w.exercises.length > 0 ? (
+                            {parseExercises(w.exercises).length > 0 ? (
                               <div className="space-y-1">
-                                {w.exercises.map((ex, i) => (
+                                {parseExercises(w.exercises).map((ex, i) => (
                                   <div key={i} className="text-xs text-gray-600">{ex.name ?? 'Exercise'} — reps: {ex.reps ?? '-'}, sets: {ex.sets ?? '-'}, weight: {ex.weight ?? '-'}</div>
                                 ))}
                               </div>
@@ -442,7 +472,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
                           </div>
                         </div>
                         <div className="flex-shrink-0 flex items-center gap-2">
-                          <Button size="sm" variant="outline" onClick={() => setEditingWorkout({ id: w.id, name: w.name, completed: w.completed, dueDate: w.dueDate, exercises: w.exercises })}>Edit</Button>
+                          <Button size="sm" variant="outline" onClick={() => setEditingWorkout({ id: w.id, name: w.name, completed: w.completed, exercises: parseExercises(w.exercises) })}>Edit</Button>
                           <Button size="sm" variant="outline" className="text-red-600 border-red-200" onClick={() => setConfirmDeleteWorkoutId(w.id)}>Delete</Button>
                         </div>
                       </div>
@@ -454,7 +484,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
 
             {/* Inline workout editor */}
             {editingWorkout && (() => {
-              const ew = editingWorkout as { id?: string; name: string; completed?: boolean; dueDate?: string; exercises?: Array<{ reps?: number; sets?: number; weight?: number; name?: string }> };
+              const ew = editingWorkout as { id?: string; name: string; completed?: boolean; exercises?: Array<{ reps?: number; sets?: number; weight?: number; name?: string }> };
               const updateExercise = (idx: number, val: Partial<{ reps?: number; sets?: number; weight?: number; name?: string }>) => {
                 const exs = (ew.exercises || []).slice();
                 exs[idx] = { ...exs[idx], ...val };
@@ -463,11 +493,9 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
               return (
                 <div className="mt-4 p-3 border border-gray-100 rounded bg-white">
                   <label className="block text-xs text-gray-700">Name</label>
-                  <input autoFocus value={ew.name} onChange={(e) => setEditingWorkout({ ...ew, name: e.target.value })} className="w-full mt-1 p-2 border rounded text-sm" />
+                  <input autoFocus value={ew.name} onChange={(e) => setEditingWorkout({ ...ew, name: e.target.value })} className="w-full mt-1 p-2 border rounded text-sm text-black" />
                   <div className="mt-2 flex gap-2 items-center">
-                    <label className="text-xs text-gray-700">Due Date</label>
-                    <input type="datetime-local" value={ew.dueDate ?? ''} onChange={(e) => setEditingWorkout({ ...ew, dueDate: e.target.value || undefined })} className="ml-2 p-1 border rounded text-sm" />
-                    <label className="ml-4 text-xs items-center flex gap-1"><input type="checkbox" checked={!!ew.completed} onChange={(e) => setEditingWorkout({ ...ew, completed: e.target.checked })} /> Completed</label>
+                    <label className="text-xs items-center flex gap-1"><input type="checkbox" checked={!!ew.completed} onChange={(e) => setEditingWorkout({ ...ew, completed: e.target.checked })} /> Completed</label>
                   </div>
 
                   <div className="mt-3">
@@ -479,10 +507,10 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
                       {(ew.exercises || []).map((ex, idx) => (
                         <div key={idx} className="p-2 border rounded bg-gray-50">
                           <div className="flex gap-2">
-                            <input placeholder="Exercise name" value={ex.name ?? ''} onChange={(e) => updateExercise(idx, { name: e.target.value })} className="flex-1 p-1 border rounded text-sm" />
-                            <input placeholder="reps" type="number" value={ex.reps ?? ''} onChange={(e) => updateExercise(idx, { reps: e.target.value ? Number(e.target.value) : undefined })} className="w-20 p-1 border rounded text-sm" />
-                            <input placeholder="sets" type="number" value={ex.sets ?? ''} onChange={(e) => updateExercise(idx, { sets: e.target.value ? Number(e.target.value) : undefined })} className="w-20 p-1 border rounded text-sm" />
-                            <input placeholder="weight" type="number" value={ex.weight ?? ''} onChange={(e) => updateExercise(idx, { weight: e.target.value ? Number(e.target.value) : undefined })} className="w-24 p-1 border rounded text-sm" />
+                            <input placeholder="Exercise name" value={ex.name ?? ''} onChange={(e) => updateExercise(idx, { name: e.target.value })} className="flex-1 p-1 border rounded text-sm text-black" />
+                            <input placeholder="reps" type="number" value={ex.reps ?? ''} onChange={(e) => updateExercise(idx, { reps: e.target.value ? Number(e.target.value) : undefined })} className="w-20 p-1 border rounded text-sm text-black" />
+                            <input placeholder="sets" type="number" value={ex.sets ?? ''} onChange={(e) => updateExercise(idx, { sets: e.target.value ? Number(e.target.value) : undefined })} className="w-20 p-1 border rounded text-sm text-black" />
+                            <input placeholder="weight" type="number" value={ex.weight ?? ''} onChange={(e) => updateExercise(idx, { weight: e.target.value ? Number(e.target.value) : undefined })} className="w-24 p-1 border rounded text-sm text-black" />
                             <Button size="sm" variant="ghost" onClick={() => setEditingWorkout({ ...ew, exercises: (ew.exercises || []).filter((_, i) => i !== idx) })}>Remove</Button>
                           </div>
                         </div>
@@ -494,8 +522,8 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
                     <Button variant="outline" onClick={() => setEditingWorkout(null)} disabled={workoutsSaving}>Cancel</Button>
                     <Button onClick={async () => {
                       if (!ew.name || ew.name.trim() === '') return;
-                      await createOrUpdateWorkout({ id: ew.id, name: ew.name, completed: ew.completed, dueDate: ew.dueDate, exercises: ew.exercises });
-                      setEditingWorkout(null);
+                      const ok = await createOrUpdateWorkout({ id: ew.id, name: ew.name, completed: ew.completed, exercises: ew.exercises });
+                      if (ok) setEditingWorkout(null);
                     }} className="bg-[#3C4526] text-white" disabled={workoutsSaving}>{workoutsSaving ? 'Saving…' : 'Save'}</Button>
                   </div>
                 </div>

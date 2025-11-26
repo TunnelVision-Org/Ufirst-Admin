@@ -6,7 +6,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
 import ClientCard from '../components/ClientCard';
-import { Users, UserCircle, FileText, TrendingUp, AlertTriangle, Mail, Calendar, Dumbbell } from 'lucide-react';
+import { Users, UserCircle, FileText, TrendingUp, AlertTriangle, Mail, Dumbbell } from 'lucide-react';
 import { getAllTrainers } from '@/lib/api/trainers';
 import { getAllClients } from '@/lib/api/clients';
 import { getTrainerByEmail } from '@/lib/api/trainers';
@@ -107,7 +107,7 @@ export default function DashboardPage() {
         value: loading ? '...' : dashboardData.totalTrainers.toString(),
         description: `Avg ${dashboardData.avgClientsPerTrainer} clients each`,
         icon: Users,
-        color: 'text-blue-600',
+        color: 'text-gray-600',
         bgColor: 'bg-blue-50',
       },
       {
@@ -201,7 +201,7 @@ export default function DashboardPage() {
                     stat.value
                   )}
                 </div>
-                <CardDescription className="text-xs mt-1">
+                <CardDescription className="text-xs mt-1 text-black">
                   {stat.description}
                 </CardDescription>
               </CardContent>
@@ -214,7 +214,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-xl text-gray-900">Quick Actions</CardTitle>
-            <CardDescription className='text-gray-900'>Manage your fitness center efficiently</CardDescription>
+            <CardDescription className='text-black'>Manage your fitness center efficiently</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

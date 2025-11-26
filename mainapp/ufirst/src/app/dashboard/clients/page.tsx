@@ -247,7 +247,7 @@ export default function ClientsPage() {
                                 type="text"
                                 value={editForm?.name || ''}
                                 onChange={(e) => setEditForm(editForm ? {...editForm, name: e.target.value} : null)}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
+                                className="w-full px-2 py-1 text-sm text-black border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
                                 placeholder="Name"
                               />
                             ) : (
@@ -305,7 +305,7 @@ export default function ClientsPage() {
                                 type="email"
                                 value={editForm?.email || ''}
                                 onChange={(e) => setEditForm(editForm ? {...editForm, email: e.target.value} : null)}
-                                className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
+                                className="flex-1 px-2 py-1 text-sm text-black border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
                                 placeholder="Email"
                               />
                             </div>

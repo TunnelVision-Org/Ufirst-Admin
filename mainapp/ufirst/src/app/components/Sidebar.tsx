@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Menu, Users, UserCircle, FileText, X, Home } from 'lucide-react';
+import { Menu, Users, UserCircle, FileText, X, Home, Dumbbell } from 'lucide-react';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { cn } from '@/lib/utils';
@@ -24,13 +24,18 @@ export default function Sidebar({ userName = 'Admin' }: SidebarProps) {
 
   const allNavItems = [
     { name: 'Home', href: '/dashboard', icon: Home, adminOnly: false },
+    { name: 'Create Workout', href: '/dashboard/workouts/create', icon: Dumbbell, trainerOnly: true },
     { name: 'Trainers', href: '/dashboard/trainers', icon: Users, adminOnly: true },
     { name: 'Clients', href: '/dashboard/clients', icon: UserCircle, adminOnly: true },
     { name: 'Reports', href: '/dashboard/reports', icon: FileText, adminOnly: true },
   ];
 
   // Filter navigation items based on user role
-  const navItems = allNavItems.filter(item => !item.adminOnly || isAdmin);
+  const navItems = allNavItems.filter(item => {
+    if (item.adminOnly && !isAdmin) return false;
+    if (item.trainerOnly && isAdmin) return false;
+    return true;
+  });
 
   return (
     <aside 
