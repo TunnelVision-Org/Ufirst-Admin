@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-
+import { GADGET_API_URL } from "@/config/api";
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log('🔐 [API/Login] Login attempt received');
   console.log('🔐 [API/Login] Method:', req.method);
@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     console.log('📡 [API/Login] Sending request to Gadget...');
     
-    const response = await fetch('https://tunnel-vision-fitness--brokemybranch.gadget.app/api/graphql', {
+    const response = await fetch(GADGET_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -7,6 +7,14 @@ import type { ClientWithDetails } from '@/lib/api/clients';
 
 type TabKey = 'info' | 'mealPlans' | 'workout' | 'weightTrends';
 
+interface Meal {
+  calories: number;
+  carbs: number;
+  fats: number;
+  name: string;
+  protein: number;
+}
+
 // Helper to safely parse exercises - handles both JSON strings and arrays
 function parseExercises(exercises: unknown): Array<{ reps?: number; sets?: number; weight?: number; name?: string }> {
   if (!exercises) return [];
@@ -35,15 +43,15 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
 
   // Meal plan modal state
   const [showMealModal, setShowMealModal] = useState(false);
-  const [mealPlans, setMealPlans] = useState<Array<{ id: string; name: string; description?: string }>>(() => {
-    const seed = (client as any).mockMealPlans as any[] | undefined;
-    if (seed && Array.isArray(seed)) return seed.map((m, i) => ({ id: m.id ?? `mp${i+1}`, name: m.name ?? `Plan ${i+1}`, description: m.description }));
-    return [];
-  });
+    const [mealPlans, setMealPlans] = useState<Array<{ id: string; name: string; description?: string; meals: Meal[]}>>(() => {
+      const seed = (client as any).mockMealPlans as any[] | undefined;
+      if (seed && Array.isArray(seed)) return seed.map((m, i) => ({ id: m.id ?? `mp${i+1}`, name: m.name ?? `Plan ${i+1}`, description: m.description, meals: m.meals ?? [] }));
+      return [];
+    });
   const [mealPlansLoading, setMealPlansLoading] = useState(false);
   const [mealPlansError, setMealPlansError] = useState<string | null>(null);
   const [mealPlansSaving, setMealPlansSaving] = useState(false);
-  const [editingPlan, setEditingPlan] = useState<{ id?: string; name: string; description?: string } | null>(null);
+  const [editingPlan, setEditingPlan] = useState<{ id?: string; name: string; description?: string; meals: Meal[] } | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [mealPlansDeletingId, setMealPlansDeletingId] = useState<string | null>(null);
   // Workout modal state
@@ -186,7 +194,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
     }
   };
 
-  const createOrUpdateMealPlan = async (plan: { id?: string; name: string; description?: string }) => {
+  const createOrUpdateMealPlan = async (plan: { id?: string; name: string; description?: string, meals: Meal[]}) => {
     if (!client?.id) return;
     if (!plan.name || plan.name.trim() === '') return;
     setMealPlansSaving(true);
@@ -202,6 +210,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
           description: plan.description,
           clientId: client.id,
           trainerId: (client as any).trainerId ?? (client as any).trainer?.id ?? undefined,
+          meals: plan.meals,
         }),
       });
       const json = await res.json();
@@ -347,7 +356,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
             <div className="mb-4 flex items-center justify-between">
               <div className="text-sm text-gray-700">Manage meal plans for this client.</div>
               <div>
-                <Button className="bg-[#3C4526] text-white" onClick={() => setEditingPlan({ name: '', description: '' })}>
+                <Button className="bg-[#3C4526] text-white" onClick={() => setEditingPlan({ name: '', description: '', meals: [] })}>
                   <Plus className="h-4 w-4 mr-2" /> New Meal Plan
                 </Button>
               </div>
@@ -374,7 +383,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
                           <p className="text-sm text-gray-600 mt-1 break-words">{mp.description ?? 'No description'}</p>
                         </div>
                         <div className="flex-shrink-0 flex items-center gap-2">
-                          <Button size="sm" variant="outline" onClick={() => setEditingPlan({ id: mp.id, name: mp.name, description: mp.description })}>Edit</Button>
+                          <Button size="sm" variant="outline" onClick={() => setEditingPlan({ id: mp.id, name: mp.name, description: mp.description, meals: mp.meals })}>Edit</Button>
                           <Button size="sm" variant="outline" className="text-red-600 border-red-200" onClick={() => setConfirmDeleteId(mp.id)} disabled={mealPlansDeletingId === mp.id}>{mealPlansDeletingId === mp.id ? 'Deleting…' : 'Delete'}</Button>
                         </div>
                       </div>
@@ -386,20 +395,143 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
 
             {/* Inline editor */}
             {editingPlan && (() => {
-              const ep = editingPlan as { id?: string; name: string; description?: string };
+              const ep = editingPlan as { id?: string; name: string; description?: string; meals: Meal[] };
               return (
                 <div className="mt-4 p-3 border border-gray-100 rounded bg-white">
+                  {/* PLAN FIELDS */}
                   <label className="block text-xs text-gray-700">Name</label>
-                  <input autoFocus value={ep.name} onChange={(e) => setEditingPlan({ ...ep, name: e.target.value })} className="w-full mt-1 p-2 border rounded text-sm text-black" />
+                  <input
+                    autoFocus
+                    value={ep.name}
+                    onChange={(e) => setEditingPlan({ ...ep, name: e.target.value })}
+                    className="w-full mt-1 p-2 border rounded text-sm text-black"
+                  />
+
                   <label className="block text-xs text-gray-700 mt-2">Description</label>
-                  <textarea value={ep.description} onChange={(e) => setEditingPlan({ ...ep, description: e.target.value })} className="w-full mt-1 p-2 border rounded text-sm text-black" rows={4}></textarea>
+                  <textarea
+                    value={ep.description}
+                    onChange={(e) => setEditingPlan({ ...ep, description: e.target.value })}
+                    className="w-full mt-1 p-2 border rounded text-sm text-black"
+                    rows={4}
+                  />
+
+                  {/* MEALS ARRAY FORM */}
+                  <div className="mt-4">
+                    <label className="block text-xs font-semibold text-gray-700 mb-2">Meals</label>
+
+                    {(ep.meals ?? []).map((meal, index) => (
+                      <div key={index} className="p-3 border border-gray-200 rounded mb-3">
+
+                        <label className="block text-xs text-gray-700">Meal Name</label>
+                        <input
+                          value={meal.name}
+                          onChange={(e) => {
+                            const meals = [...ep.meals];
+                            meals[index] = { ...meals[index], name: e.target.value };
+                            setEditingPlan({ ...ep, meals });
+                          }}
+                          className="w-full mt-1 p-2 border rounded text-sm text-black"
+                        />
+
+                        <label className="block text-xs text-gray-700 mt-2">Calories</label>
+                        <input
+                          type="number"
+                          value={meal.calories}
+                          onChange={(e) => {
+                            const meals = [...ep.meals];
+                            meals[index] = { ...meals[index], calories: Number(e.target.value) };
+                            setEditingPlan({ ...ep, meals });
+                          }}
+                          className="w-full mt-1 p-2 border rounded text-sm text-black"
+                        />
+
+                        <label className="block text-xs text-gray-700 mt-2">Carbs</label>
+                        <input
+                          type="number"
+                          value={meal.carbs}
+                          onChange={(e) => {
+                            const meals = [...ep.meals];
+                            meals[index] = { ...meals[index], carbs: Number(e.target.value) };
+                            setEditingPlan({ ...ep, meals });
+                          }}
+                          className="w-full mt-1 p-2 border rounded text-sm text-black"
+                        />
+
+                        <label className="block text-xs text-gray-700 mt-2">Fats</label>
+                        <input
+                          type="number"
+                          value={meal.fats}
+                          onChange={(e) => {
+                            const meals = [...ep.meals];
+                            meals[index] = { ...meals[index], fats: Number(e.target.value) };
+                            setEditingPlan({ ...ep, meals });
+                          }}
+                          className="w-full mt-1 p-2 border rounded text-sm text-black"
+                        />
+
+                        <label className="block text-xs text-gray-700 mt-2">Proteins</label>
+                        <input
+                          type="number"
+                          value={meal.protein}
+                          onChange={(e) => {
+                            const meals = [...ep.meals];
+                            meals[index] = { ...meals[index], protein: Number(e.target.value) };
+                            setEditingPlan({ ...ep, meals });
+                          }}
+                          className="w-full mt-1 p-2 border rounded text-sm text-black"
+                        />
+
+                        {/* REMOVE MEAL BUTTON */}
+                        <div className="flex justify-end mt-2">
+                          <button
+                            onClick={() => {
+                              const meals = [...ep.meals];
+                              meals.splice(index, 1);
+                              setEditingPlan({ ...ep, meals });
+                            }}
+                            className="text-xs border px-2 py-1 rounded text-red-600"
+                          >
+                            Remove Meal
+                          </button>
+                        </div>
+
+                      </div>
+                    ))}
+
+                    {/* ADD NEW MEAL BUTTON */}
+                    <button
+                      onClick={() =>
+                        setEditingPlan({
+                          ...ep,
+                          meals: [
+                            ...(ep.meals ?? []),
+                            { name: "", calories: 0, carbs: 0, fats: 0, protein: 0 }
+                          ]
+                        })
+                      }
+                      className="mt-1 px-3 py-1 text-xs border rounded text-black"
+                    >
+                      + Add Meal
+                    </button>
+                  </div>
+
+                  {/* ACTION BUTTONS */}
                   <div className="mt-3 flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setEditingPlan(null)} disabled={mealPlansSaving}>Cancel</Button>
-                    <Button onClick={async () => {
-                      if (!ep.name || ep.name.trim() === '') return;
-                      await createOrUpdateMealPlan(ep);
-                      setEditingPlan(null);
-                    }} className="bg-[#3C4526] text-white" disabled={mealPlansSaving}>{mealPlansSaving ? 'Saving…' : 'Save'}</Button>
+                    <Button variant="outline" onClick={() => setEditingPlan(null)} disabled={mealPlansSaving}>
+                      Cancel
+                    </Button>
+
+                    <Button
+                      onClick={async () => {
+                        if (!ep.name || ep.name.trim() === '') return;
+                        await createOrUpdateMealPlan(ep);
+                        setEditingPlan(null);
+                      }}
+                      className="bg-[#3C4526] text-white"
+                      disabled={mealPlansSaving}
+                    >
+                      {mealPlansSaving ? 'Saving…' : 'Save'}
+                    </Button>
                   </div>
                 </div>
               );
