@@ -5,7 +5,7 @@ import DashboardLayout from '@/app/components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Avatar, AvatarFallback } from '@/app/components/ui/avatar';
-import { Plus, UserPlus, Users, TrendingUp, Award, Phone, Mail, MoreVertical, Search, X, Calendar, AlertTriangle, Clock, FileText, User, Trash2, Check, Star } from 'lucide-react';
+import { UserPlus, Users, TrendingUp, Award, Phone, Mail, MoreVertical, Search, X, Calendar, AlertTriangle, Clock, FileText, User, Trash2, Check } from 'lucide-react';
 import { getAllTrainers, updateTrainer, deleteTrainer, getTrainerById, type Trainer, type TrainerWithDetails } from '@/lib/api/trainers';
 import { mockServiceReports } from '@/app/data/mockData';
 import { cn } from '@/lib/utils';

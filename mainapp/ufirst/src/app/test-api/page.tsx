@@ -5,9 +5,12 @@ import { Button } from '@/app/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { GADGET_API_URL } from '@/config/api';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ApiResult = Record<string, any> | null;
+
 export default function TestApiPage() {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<ApiResult>(null);
   const [error, setError] = useState<string | null>(null);
 
   const testGetAllTrainers = async () => {

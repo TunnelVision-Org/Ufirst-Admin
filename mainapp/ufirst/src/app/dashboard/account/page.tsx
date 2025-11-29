@@ -4,7 +4,7 @@ import DashboardLayout from '@/app/components/DashboardLayout';
 import { Card, CardContent } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Avatar, AvatarFallback } from '@/app/components/ui/avatar';
-import { MapPin, Mail, Globe, Calendar, User as UserIcon, ArrowLeft, Star, Check, X } from 'lucide-react';
+import { MapPin, ArrowLeft, Star, Check, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 

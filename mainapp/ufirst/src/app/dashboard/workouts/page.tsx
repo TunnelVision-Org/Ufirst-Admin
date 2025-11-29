@@ -36,7 +36,7 @@ export default function WorkoutsManagerPage() {
       const res = await fetch("/api/workouts/templates/getAll")
       const json = await res.json()
       if (json?.templates) setTemplates(json.templates)
-    } catch (err) {
+    } catch {
       // ignore silently, show small message
     }
   }
@@ -46,7 +46,7 @@ export default function WorkoutsManagerPage() {
       const res = await fetch("/api/trainers/getAll")
       const json = await res.json()
       if (json?.trainers) setTrainers(json.trainers)
-    } catch (err) {
+    } catch {
       // ignore silently
     }
   }

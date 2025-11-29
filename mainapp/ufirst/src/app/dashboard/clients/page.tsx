@@ -4,9 +4,8 @@ import DashboardLayout from '@/app/components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Avatar, AvatarFallback } from '@/app/components/ui/avatar';
-import { UserCircle, Plus, Search, Phone, Mail, Calendar, TrendingUp, MoreVertical, Trash2, X, Check, AlertTriangle } from 'lucide-react';
+import { UserCircle, Plus, Search, Mail, Calendar, TrendingUp, MoreVertical, Trash2, X, Check, AlertTriangle } from 'lucide-react';
 import { getAllClients, updateClient, deleteClient, type ClientWithDetails } from '@/lib/api/clients';
-import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 
 export default function ClientsPage() {
