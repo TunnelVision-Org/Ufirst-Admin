@@ -4,9 +4,9 @@ on:
   push:
     branches:
       - main
-    pull_request:
-      branches:
-        - main
+  pull_request:
+    branches:
+      - main
 
 
 jobs:
@@ -34,3 +34,6 @@ jobs:
       - name: Run tests 
         working-directory: ./mainapp/ufirst
         run: npm test
+        env:
+          GADGET_API_KEY: ${{ secrets.GADGET_API_KEY }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
