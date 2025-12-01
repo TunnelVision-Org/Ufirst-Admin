@@ -4,9 +4,10 @@ import DashboardLayout from '@/app/components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Avatar, AvatarFallback } from '@/app/components/ui/avatar';
-import { UserCircle, Plus, Search, Mail, Calendar, TrendingUp, MoreVertical, Trash2, X, Check, AlertTriangle } from 'lucide-react';
+import { UserCircle, Plus, Search, Mail, Calendar, TrendingUp, MoreVertical, Trash2, X, Check, AlertTriangle, CheckCircle, Eye, Dumbbell, UtensilsCrossed, Scale } from 'lucide-react';
 import { getAllClients, updateClient, deleteClient, type ClientWithDetails } from '@/lib/api/clients';
 import { useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<ClientWithDetails[]>([]);
@@ -15,6 +16,8 @@ export default function ClientsPage() {
   const [editForm, setEditForm] = useState<{name: string; email: string} | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{message: string; type: 'success' | 'error'} | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<ClientWithDetails | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
     client: ClientWithDetails | null;
@@ -59,8 +62,13 @@ export default function ClientsPage() {
       await deleteClient(deleteConfirmation.client.id);
       setClients(clients.filter(c => c.id !== deleteConfirmation.client!.id));
       setDeleteConfirmation({ isOpen: false, client: null, isDeleting: false });
+      
+      // Show success notification
+      setNotification({ message: 'Client deleted successfully', type: 'success' });
+      setTimeout(() => setNotification(null), 3000);
     } catch (err) {
-      alert(`Failed to delete client: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setNotification({ message: err instanceof Error ? err.message : 'Failed to delete client', type: 'error' });
+      setTimeout(() => setNotification(null), 3000);
       setDeleteConfirmation(prev => ({ ...prev, isDeleting: false }));
     }
   };
@@ -97,8 +105,13 @@ export default function ClientsPage() {
       ));
       setEditingClientId(null);
       setEditForm(null);
+      
+      // Show success notification
+      setNotification({ message: 'Client updated successfully', type: 'success' });
+      setTimeout(() => setNotification(null), 3000);
     } catch (err) {
-      alert(`Failed to update client: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setNotification({ message: err instanceof Error ? err.message : 'Failed to update client', type: 'error' });
+      setTimeout(() => setNotification(null), 3000);
     }
   };
 
@@ -117,8 +130,38 @@ export default function ClientsPage() {
   const activeClients = clients.filter(c => c.workoutCount > 0 || c.mealPlanCount > 0).length;
   const totalWorkouts = clients.reduce((sum, c) => sum + c.workoutCount, 0);
 
+  // Notification Toast Component
+  const NotificationToast = () => {
+    if (!notification) return null;
+    
+    return (
+      <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2 fade-in duration-300">
+        <div className={cn(
+          "flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border",
+          notification.type === 'success' 
+            ? "bg-green-50 border-green-200 text-green-800" 
+            : "bg-red-50 border-red-200 text-red-800"
+        )}>
+          {notification.type === 'success' ? (
+            <CheckCircle className="h-5 w-5 text-green-600" />
+          ) : (
+            <AlertTriangle className="h-5 w-5 text-red-600" />
+          )}
+          <p className="font-medium text-sm">{notification.message}</p>
+          <button 
+            onClick={() => setNotification(null)}
+            className="ml-2 hover:opacity-70 transition-opacity"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <DashboardLayout userName="Admin">
+      <NotificationToast />
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -347,7 +390,13 @@ export default function ClientsPage() {
                       </div>
 
                       <div className="flex gap-2 mt-4">
-                        <Button variant="outline" className="flex-1" size="sm">
+                        <Button 
+                          variant="outline" 
+                          className="flex-1" 
+                          size="sm"
+                          onClick={() => setSelectedProfile(client)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
                           View Profile
                         </Button>
                         <Button 
@@ -368,6 +417,134 @@ export default function ClientsPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Client Profile Modal */}
+        {selectedProfile && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedProfile(null)}>
+            <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[85vh] overflow-hidden animate-in fade-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
+              {/* Header */}
+              <div className="bg-gradient-to-r from-[#3C4526] to-[#2d331c] p-4 text-white">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-12 w-12 border-2 border-white/20">
+                      <AvatarFallback className="bg-white/20 text-white font-semibold">
+                        {selectedProfile.name.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h2 className="text-lg font-semibold">{selectedProfile.name}</h2>
+                      <p className="text-sm text-white/80">{selectedProfile.email}</p>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-white hover:bg-white/20"
+                    onClick={() => setSelectedProfile(null)}
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-4 overflow-y-auto max-h-[calc(85vh-120px)]">
+                {/* Trainer Info */}
+                {selectedProfile.trainerName && (
+                  <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <p className="text-xs text-gray-500 mb-1">Assigned Trainer</p>
+                    <p className="font-medium text-gray-900">{selectedProfile.trainerName}</p>
+                  </div>
+                )}
+
+                {/* Records Summary */}
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">Client Records</h3>
+                <div className="space-y-3">
+                  {/* Workouts */}
+                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <Dumbbell className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Workouts</p>
+                        <p className="text-xs text-gray-500">Training sessions completed</p>
+                      </div>
+                    </div>
+                    <span className="text-2xl font-bold text-blue-600">{selectedProfile.workoutCount}</span>
+                  </div>
+
+                  {/* Meal Plans */}
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <UtensilsCrossed className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Meal Plans</p>
+                        <p className="text-xs text-gray-500">Active nutrition plans</p>
+                      </div>
+                    </div>
+                    <span className="text-2xl font-bold text-green-600">{selectedProfile.mealPlanCount}</span>
+                  </div>
+
+                  {/* Weight Trends */}
+                  <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-100">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-100 rounded-lg">
+                        <Scale className="h-5 w-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Weight Trends</p>
+                        <p className="text-xs text-gray-500">Progress tracking entries</p>
+                      </div>
+                    </div>
+                    <span className="text-2xl font-bold text-purple-600">{selectedProfile.weightTrendCount}</span>
+                  </div>
+                </div>
+
+                {/* Account Info */}
+                <div className="mt-4 pt-4 border-t">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Account Information</h3>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-gray-500">Member Since</p>
+                      <p className="font-medium text-gray-900">
+                        {new Date(selectedProfile.createdAt).toLocaleDateString('en-US', { 
+                          month: 'long', 
+                          day: 'numeric',
+                          year: 'numeric' 
+                        })}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Status</p>
+                      <span className={cn(
+                        "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
+                        selectedProfile.workoutCount > 0 || selectedProfile.mealPlanCount > 0
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-700"
+                      )}>
+                        {selectedProfile.workoutCount > 0 || selectedProfile.mealPlanCount > 0 ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 border-t bg-gray-50">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => setSelectedProfile(null)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Delete Confirmation Modal */}
         {deleteConfirmation.isOpen && deleteConfirmation.client && (

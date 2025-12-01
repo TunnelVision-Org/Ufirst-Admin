@@ -383,7 +383,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
                           <p className="text-sm text-gray-600 mt-1 break-words">{mp.description ?? 'No description'}</p>
                         </div>
                         <div className="flex-shrink-0 flex items-center gap-2">
-                          <Button size="sm" variant="outline" onClick={() => setEditingPlan({ id: mp.id, name: mp.name, description: mp.description, meals: mp.meals })}>Edit</Button>
+                          <Button size="sm" variant="outline" className="text-white" onClick={() => setEditingPlan({ id: mp.id, name: mp.name, description: mp.description, meals: mp.meals })}>Edit</Button>
                           <Button size="sm" variant="outline" className="text-red-600 border-red-200" onClick={() => setConfirmDeleteId(mp.id)} disabled={mealPlansDeletingId === mp.id}>{mealPlansDeletingId === mp.id ? 'Deleting…' : 'Delete'}</Button>
                         </div>
                       </div>
@@ -399,7 +399,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
               return (
                 <div className="mt-4 p-3 border border-gray-100 rounded bg-white">
                   {/* PLAN FIELDS */}
-                  <label className="block text-xs text-gray-700">Name</label>
+                  <label className="block text-xs text-black">Name</label>
                   <input
                     autoFocus
                     value={ep.name}
@@ -407,7 +407,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
                     className="w-full mt-1 p-2 border rounded text-sm text-black"
                   />
 
-                  <label className="block text-xs text-gray-700 mt-2">Description</label>
+                  <label className="block text-xs text-black mt-2">Description</label>
                   <textarea
                     value={ep.description}
                     onChange={(e) => setEditingPlan({ ...ep, description: e.target.value })}
@@ -417,12 +417,12 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
 
                   {/* MEALS ARRAY FORM */}
                   <div className="mt-4">
-                    <label className="block text-xs font-semibold text-gray-700 mb-2">Meals</label>
+                    <label className="block text-xs font-semibold text-black mb-2">Meals</label>
 
                     {(ep.meals ?? []).map((meal, index) => (
                       <div key={index} className="p-3 border border-gray-200 rounded mb-3">
 
-                        <label className="block text-xs text-gray-700">Meal Name</label>
+                        <label className="block text-xs text-black">Meal Name</label>
                         <input
                           value={meal.name}
                           onChange={(e) => {
@@ -433,7 +433,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
                           className="w-full mt-1 p-2 border rounded text-sm text-black"
                         />
 
-                        <label className="block text-xs text-gray-700 mt-2">Calories</label>
+                        <label className="block text-xs text-black mt-2">Calories</label>
                         <input
                           type="number"
                           value={meal.calories}
@@ -445,7 +445,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
                           className="w-full mt-1 p-2 border rounded text-sm text-black"
                         />
 
-                        <label className="block text-xs text-gray-700 mt-2">Carbs</label>
+                        <label className="block text-xs text-black mt-2">Carbs</label>
                         <input
                           type="number"
                           value={meal.carbs}
@@ -457,7 +457,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
                           className="w-full mt-1 p-2 border rounded text-sm text-black"
                         />
 
-                        <label className="block text-xs text-gray-700 mt-2">Fats</label>
+                        <label className="block text-xs text-black mt-2">Fats</label>
                         <input
                           type="number"
                           value={meal.fats}
@@ -469,7 +469,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
                           className="w-full mt-1 p-2 border rounded text-sm text-black"
                         />
 
-                        <label className="block text-xs text-gray-700 mt-2">Proteins</label>
+                        <label className="block text-xs text-black mt-2">Proteins</label>
                         <input
                           type="number"
                           value={meal.protein}
@@ -517,7 +517,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
 
                   {/* ACTION BUTTONS */}
                   <div className="mt-3 flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setEditingPlan(null)} disabled={mealPlansSaving}>
+                    <Button variant="outline" className="text-white" onClick={() => setEditingPlan(null)} disabled={mealPlansSaving}>
                       Cancel
                     </Button>
 
@@ -542,7 +542,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
               <div className="mt-4 p-3 border border-red-100 rounded bg-red-50 text-red-800">
                 <div>Are you sure you want to delete this meal plan?</div>
                 <div className="mt-2 flex gap-2 justify-end">
-                  <Button variant="outline" onClick={() => setConfirmDeleteId(null)} disabled={!!mealPlansDeletingId}>Cancel</Button>
+                  <Button variant="outline" className="text-white" onClick={() => setConfirmDeleteId(null)} disabled={!!mealPlansDeletingId}>Cancel</Button>
                   <Button className="bg-red-600 text-white" onClick={() => confirmDeleteId && deleteMealPlan(confirmDeleteId)} disabled={!!mealPlansDeletingId}>{mealPlansDeletingId ? 'Deleting…' : 'Delete'}</Button>
                 </div>
                 {mealPlansError && <div className="mt-2 text-xs text-red-700">{mealPlansError}</div>}
@@ -604,7 +604,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
                           </div>
                         </div>
                         <div className="flex-shrink-0 flex items-center gap-2">
-                          <Button size="sm" variant="outline" onClick={() => setEditingWorkout({ id: w.id, name: w.name, completed: w.completed, exercises: parseExercises(w.exercises) })}>Edit</Button>
+                          <Button size="sm" variant="outline" className="text-white" onClick={() => setEditingWorkout({ id: w.id, name: w.name, completed: w.completed, exercises: parseExercises(w.exercises) })}>Edit</Button>
                           <Button size="sm" variant="outline" className="text-red-600 border-red-200" onClick={() => setConfirmDeleteWorkoutId(w.id)}>Delete</Button>
                         </div>
                       </div>
@@ -624,26 +624,26 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
               };
               return (
                 <div className="mt-4 p-3 border border-gray-100 rounded bg-white">
-                  <label className="block text-xs text-gray-700">Name</label>
+                  <label className="block text-xs text-black">Name</label>
                   <input autoFocus value={ew.name} onChange={(e) => setEditingWorkout({ ...ew, name: e.target.value })} className="w-full mt-1 p-2 border rounded text-sm text-black" />
                   <div className="mt-2 flex gap-2 items-center">
-                    <label className="text-xs items-center flex gap-1"><input type="checkbox" checked={!!ew.completed} onChange={(e) => setEditingWorkout({ ...ew, completed: e.target.checked })} /> Completed</label>
+                    <label className="text-xs items-center flex gap-1 text-black"><input type="checkbox" checked={!!ew.completed} onChange={(e) => setEditingWorkout({ ...ew, completed: e.target.checked })} /> Completed</label>
                   </div>
 
                   <div className="mt-3">
                     <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium">Exercises</label>
-                      <Button size="sm" onClick={() => setEditingWorkout({ ...ew, exercises: [...(ew.exercises || []), { name: '', reps: undefined, sets: undefined, weight: undefined }] })}>Add Exercise</Button>
+                      <label className="text-sm font-medium text-black">Exercises</label>
+                      <Button size="sm" className="text-black" onClick={() => setEditingWorkout({ ...ew, exercises: [...(ew.exercises || []), { name: '', reps: undefined, sets: undefined, weight: undefined }] })}>Add Exercise</Button>
                     </div>
                     <div className="mt-2 space-y-2">
                       {(ew.exercises || []).map((ex, idx) => (
-                        <div key={idx} className="p-2 border rounded bg-gray-50">
+                        <div key={idx} className="p-2 border rounded bg-gray-50 txt-color-black">
                           <div className="flex gap-2">
                             <input placeholder="Exercise name" value={ex.name ?? ''} onChange={(e) => updateExercise(idx, { name: e.target.value })} className="flex-1 p-1 border rounded text-sm text-black" />
                             <input placeholder="reps" type="number" value={ex.reps ?? ''} onChange={(e) => updateExercise(idx, { reps: e.target.value ? Number(e.target.value) : undefined })} className="w-20 p-1 border rounded text-sm text-black" />
                             <input placeholder="sets" type="number" value={ex.sets ?? ''} onChange={(e) => updateExercise(idx, { sets: e.target.value ? Number(e.target.value) : undefined })} className="w-20 p-1 border rounded text-sm text-black" />
                             <input placeholder="weight" type="number" value={ex.weight ?? ''} onChange={(e) => updateExercise(idx, { weight: e.target.value ? Number(e.target.value) : undefined })} className="w-24 p-1 border rounded text-sm text-black" />
-                            <Button size="sm" variant="ghost" onClick={() => setEditingWorkout({ ...ew, exercises: (ew.exercises || []).filter((_, i) => i !== idx) })}>Remove</Button>
+                            <Button size="sm" variant="ghost" className="text-black" onClick={() => setEditingWorkout({ ...ew, exercises: (ew.exercises || []).filter((_, i) => i !== idx) })}>Remove</Button>
                           </div>
                         </div>
                       ))}
@@ -651,7 +651,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
                   </div>
 
                   <div className="mt-3 flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setEditingWorkout(null)} disabled={workoutsSaving}>Cancel</Button>
+                    <Button variant="outline" className="text-white" onClick={() => setEditingWorkout(null)} disabled={workoutsSaving}>Cancel</Button>
                     <Button onClick={async () => {
                       if (!ew.name || ew.name.trim() === '') return;
                       const ok = await createOrUpdateWorkout({ id: ew.id, name: ew.name, completed: ew.completed, exercises: ew.exercises });
@@ -667,7 +667,7 @@ export default function ClientCard({ client }: { client: Partial<ClientWithDetai
               <div className="mt-4 p-3 border border-red-100 rounded bg-red-50 text-red-800">
                 <div>Are you sure you want to delete this workout?</div>
                   <div className="mt-2 flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setConfirmDeleteWorkoutId(null)} disabled={!!workoutsDeletingId}>Cancel</Button>
+                    <Button variant="outline" className="text-white" onClick={() => setConfirmDeleteWorkoutId(null)} disabled={!!workoutsDeletingId}>Cancel</Button>
                     <Button className="bg-red-600 text-white" onClick={() => confirmDeleteWorkoutId && deleteWorkout(confirmDeleteWorkoutId)} disabled={!!workoutsDeletingId}>{workoutsDeletingId ? 'Deleting…' : 'Delete'}</Button>
                   </div>
               </div>
