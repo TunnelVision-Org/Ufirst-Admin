@@ -3,7 +3,6 @@
 import DashboardLayout from '../../components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { Avatar, AvatarFallback } from '../../components/ui/avatar';
 import { AlertTriangle, Clock, FileText, Search, User, Trash2, X } from 'lucide-react';
 import { mockServiceReports } from '@/app/data/mockData';
 import { cn } from '@/lib/utils';

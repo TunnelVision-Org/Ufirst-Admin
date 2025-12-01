@@ -16,7 +16,7 @@ export interface Trainer {
 
 export interface TrainerWithDetails extends Trainer {
   workoutId?: string;
-  mealPlans: any[];
+  mealPlans: unknown[];
   clients: {
     id: string;
     name: string;

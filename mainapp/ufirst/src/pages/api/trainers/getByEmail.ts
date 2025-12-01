@@ -12,6 +12,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Email is required' });
   }
 
+  // Check if user is admin by email
+  if (email.toLowerCase() === 'admin@ufirst.com') {
+    console.log('👑 [API/GetTrainerByEmail] Admin user detected');
+    return res.status(200).json({
+      id: 'admin',
+      odataId: 'admin',
+      email: 'admin@ufirst.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'admin',
+      clients: []
+    });
+  }
+
   try {
     console.log('🔍 [API/GetTrainerByEmail] Step 1: Finding user by email:', email);
     

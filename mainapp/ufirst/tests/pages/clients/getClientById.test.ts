@@ -20,7 +20,7 @@ describe('GET /api/clients/getById', () => {
     originalFetch = (global as any).fetch;
     (global as any).fetch = jest.fn();
     // import after mocks
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     handler = require('@/pages/api/clients/getById').default;
   });
 
@@ -71,7 +71,7 @@ describe('GET /api/clients/getById', () => {
       GADGET_API_URL: defaultConfig.GADGET_API_URL,
       GADGET_API_KEY: '',
     }));
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const handlerMissingKey = require('@/pages/api/clients/getById').default;
 
     const { req, res, statusMock, jsonMock } = createReqRes('GET', 'client-1');

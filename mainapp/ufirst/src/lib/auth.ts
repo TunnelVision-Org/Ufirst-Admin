@@ -2,7 +2,8 @@
  * Authentication and User Management Utilities
  */
 
-import { ADMIN_EMAIL } from '@/config/api';
+// Read admin email from environment variable (NEXT_PUBLIC_ prefix exposes it to client)
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@ufirst.com';
 
 export interface User {
   id: string;

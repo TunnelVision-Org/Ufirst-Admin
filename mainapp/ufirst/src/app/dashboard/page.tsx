@@ -6,7 +6,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
 import ClientCard from '../components/ClientCard';
-import { Users, UserCircle, FileText, TrendingUp, AlertTriangle, Mail, Dumbbell } from 'lucide-react';
+import { Users, UserCircle, FileText, TrendingUp, AlertTriangle } from 'lucide-react';
 import { getAllTrainers } from '@/lib/api/trainers';
 import { getAllClients } from '@/lib/api/clients';
 import { getTrainerByEmail } from '@/lib/api/trainers';

@@ -29,7 +29,7 @@ describe('GET /api/clients/getAll API Route', () => {
     (global as any).fetch = jest.fn();
 
     // import handler after mocks are set up
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     handler = require('@/pages/api/clients/getAll').default;
   });
 
@@ -77,7 +77,7 @@ describe('GET /api/clients/getAll API Route', () => {
       GADGET_API_URL: 'https://api.gadget.test/graphql',
       GADGET_API_KEY: '',
     }));
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const handlerMissingKey = require('@/pages/api/clients/getAll').default;
 
     const { req, res, statusMock, jsonMock } = createReqRes('GET');

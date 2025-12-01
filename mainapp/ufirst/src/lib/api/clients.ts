@@ -40,8 +40,8 @@ export async function getAllClients(): Promise<ClientWithDetails[]> {
       if (error && error.error){
         errorMessage = error.error;
       }
-    } catch (e) {
-
+    } catch {
+      // ignore parse error
     }
     throw new Error(errorMessage);
   }

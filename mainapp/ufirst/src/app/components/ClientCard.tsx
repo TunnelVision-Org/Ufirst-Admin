@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
-import { Mail, Dumbbell, FileText, X, Plus } from 'lucide-react';
+import { Dumbbell, FileText, X, Plus } from 'lucide-react';
 import { Button } from './ui/button';
 import type { ClientWithDetails } from '@/lib/api/clients';
 
