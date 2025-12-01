@@ -217,7 +217,7 @@ export default function DashboardPage() {
             <CardDescription className='text-black'>Manage your fitness center efficiently</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <a
                 href="/dashboard/trainers"
                 className="p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-purple-400 hover:bg-purple-50 transition-all cursor-pointer text-center"
@@ -234,14 +234,7 @@ export default function DashboardPage() {
                 <p className="font-semibold text-gray-900">Manage Clients</p>
                 <p className="text-xs text-black mt-1">View and manage client data</p>
               </a>
-              <a
-                href="/dashboard/reports"
-                className="p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer text-center"
-              >
-                <FileText className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                <p className="font-semibold text-gray-900">View Reports</p>
-                <p className="text-xs text-black mt-1">Access analytics and insights</p>
-              </a>
+
             </div>
           </CardContent>
         </Card>

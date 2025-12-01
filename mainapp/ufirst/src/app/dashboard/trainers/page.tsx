@@ -5,22 +5,20 @@ import DashboardLayout from '@/app/components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Avatar, AvatarFallback } from '@/app/components/ui/avatar';
-import { UserPlus, Users, TrendingUp, Award, Phone, Mail, MoreVertical, Search, X, Calendar, AlertTriangle, Clock, FileText, User, Trash2, Check } from 'lucide-react';
+import { UserPlus, Users, TrendingUp, Mail, MoreVertical, Search, X, Calendar, AlertTriangle, Trash2, Check, FileText, CheckCircle } from 'lucide-react';
 import { getAllTrainers, updateTrainer, deleteTrainer, getTrainerById, type Trainer, type TrainerWithDetails } from '@/lib/api/trainers';
-import { mockServiceReports } from '@/app/data/mockData';
 import { cn } from '@/lib/utils';
 
 export default function TrainersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTrainer, setSelectedTrainer] = useState<TrainerWithDetails | null>(null);
   const [loadingClients, setLoadingClients] = useState(false);
-  const [selectedTrainerForReports, setSelectedTrainerForReports] = useState<Trainer | null>(null);
-  const [reports, setReports] = useState(mockServiceReports);
   const [trainers, setTrainers] = useState<Trainer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingTrainerId, setEditingTrainerId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<{name: string; specialization: string; email: string; phone: string} | null>(null);
+  const [editForm, setEditForm] = useState<{name: string; specialization: string; email: string} | null>(null);
+  const [notification, setNotification] = useState<{message: string; type: 'success' | 'error'} | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
     trainer: Trainer | null;
@@ -54,9 +52,6 @@ export default function TrainersPage() {
 
   const totalTrainers = trainers.length;
   const totalClients = trainers.reduce((sum, t) => sum + t.clientCount, 0);
-  const avgRating = totalTrainers > 0 
-    ? (trainers.reduce((sum, t) => sum + t.rating, 0) / totalTrainers).toFixed(1)
-    : '0.0';
 
   const handleViewClients = async (trainer: Trainer) => {
     try {
@@ -65,7 +60,8 @@ export default function TrainersPage() {
       setSelectedTrainer(trainerWithDetails);
     } catch (err) {
       console.error('Error fetching trainer details:', err);
-      alert(`Failed to load clients for ${trainer.name}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setNotification({ message: `Failed to load clients for ${trainer.name}`, type: 'error' });
+      setTimeout(() => setNotification(null), 3000);
     } finally {
       setLoadingClients(false);
     }
@@ -77,7 +73,6 @@ export default function TrainersPage() {
       name: trainer.name,
       specialization: trainer.specialization || '',
       email: trainer.email,
-      phone: trainer.phone || '',
     });
   };
 
@@ -106,10 +101,14 @@ export default function TrainersPage() {
 
       setEditingTrainerId(null);
       setEditForm(null);
-      alert('Trainer updated successfully');
+      
+      // Show success notification
+      setNotification({ message: 'Trainer updated successfully', type: 'success' });
+      setTimeout(() => setNotification(null), 3000);
     } catch (err) {
       console.error('Error updating trainer:', err);
-      alert(err instanceof Error ? err.message : 'Failed to update trainer');
+      setNotification({ message: err instanceof Error ? err.message : 'Failed to update trainer', type: 'error' });
+      setTimeout(() => setNotification(null), 3000);
     }
   };
 
@@ -148,9 +147,6 @@ export default function TrainersPage() {
       // Update local state
       setTrainers(trainers.filter(t => t.id !== trainer.id));
       
-      // Remove associated reports
-      setReports(reports.filter(r => r.trainerId !== trainer.id));
-      
       // Close confirmation modal
       setDeleteConfirmation({
         isOpen: false,
@@ -158,57 +154,15 @@ export default function TrainersPage() {
         isDeleting: false,
       });
 
-      // Show success message
-      alert(`Trainer "${trainer.name}" has been deleted successfully`);
+      // Show success notification
+      setNotification({ message: `Trainer "${trainer.name}" has been deleted successfully`, type: 'success' });
+      setTimeout(() => setNotification(null), 3000);
     } catch (err) {
       console.error('Error deleting trainer:', err);
-      alert(err instanceof Error ? err.message : 'Failed to delete trainer');
+      setNotification({ message: err instanceof Error ? err.message : 'Failed to delete trainer', type: 'error' });
+      setTimeout(() => setNotification(null), 3000);
       
       setDeleteConfirmation(prev => ({ ...prev, isDeleting: false }));
-    }
-  };
-
-  const handleDismissReport = (reportId: string) => {
-    if (window.confirm('Are you sure you want to dismiss this report?')) {
-      setReports(reports.filter(r => r.id !== reportId));
-    }
-  };
-
-  const handleDeleteTrainerFromReport = (trainerId: string) => {
-    const trainer = trainers.find(t => t.id === trainerId);
-    if (trainer) {
-      openDeleteConfirmation(trainer);
-      setSelectedTrainerForReports(null);
-    }
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'late': return Clock;
-      case 'unprofessional': return AlertTriangle;
-      case 'unprepared': return FileText;
-      case 'inappropriate': return AlertTriangle;
-      default: return FileText;
-    }
-  };
-
-  const getCategoryLabel = (category: string) => {
-    const labels: Record<string, string> = {
-      'late': 'Late Arrival',
-      'unprofessional': 'Unprofessional',
-      'unprepared': 'Unprepared',
-      'inappropriate': 'Inappropriate Behavior',
-      'other': 'Other'
-    };
-    return labels[category] || category;
-  };
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'high': return 'bg-red-100 text-red-700 border-red-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      case 'low': return 'bg-blue-100 text-blue-700 border-blue-200';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
 
@@ -224,6 +178,35 @@ export default function TrainersPage() {
       </DashboardLayout>
     );
   }
+
+  // Notification Toast Component
+  const NotificationToast = () => {
+    if (!notification) return null;
+    
+    return (
+      <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2 fade-in duration-300">
+        <div className={cn(
+          "flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border",
+          notification.type === 'success' 
+            ? "bg-green-50 border-green-200 text-green-800" 
+            : "bg-red-50 border-red-200 text-red-800"
+        )}>
+          {notification.type === 'success' ? (
+            <CheckCircle className="h-5 w-5 text-green-600" />
+          ) : (
+            <AlertTriangle className="h-5 w-5 text-red-600" />
+          )}
+          <p className="font-medium text-sm">{notification.message}</p>
+          <button 
+            onClick={() => setNotification(null)}
+            className="ml-2 hover:opacity-70 transition-opacity"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   if (error) {
     return (
@@ -243,6 +226,7 @@ export default function TrainersPage() {
 
   return (
     <DashboardLayout userName="Admin">
+      <NotificationToast />
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -271,7 +255,7 @@ export default function TrainersPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
@@ -308,19 +292,6 @@ export default function TrainersPage() {
             <CardContent>
               <div className="text-3xl font-bold text-gray-900">{Math.round(totalClients / totalTrainers)}</div>
               <p className="text-xs text-black mt-1">Clients per trainer</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                <Award className="h-4 w-4" />
-                Avg. Rating
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{avgRating}</div>
-              <p className="text-xs text-black mt-1">Out of 5.0 stars</p>
             </CardContent>
           </Card>
         </div>
@@ -375,7 +346,7 @@ export default function TrainersPage() {
                             type="text"
                             value={editForm?.name || ''}
                             onChange={(e) => setEditForm(editForm ? {...editForm, name: e.target.value} : null)}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
+                            className="w-full px-2 py-1 text-sm text-black border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
                            
                             placeholder="Name"
                           />
@@ -442,16 +413,6 @@ export default function TrainersPage() {
                           placeholder="Email"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-black" />
-                        <input
-                          type="tel"
-                          value={editForm?.phone || ''}
-                          onChange={(e) => setEditForm(editForm ? {...editForm, phone: e.target.value} : null)}
-                          className="flex-1 px-2 py-1 text-sm text-black border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#3C4526]"
-                          placeholder="Phone"
-                        />
-                      </div>
                     </>
                   ) : (
                     <>
@@ -459,23 +420,15 @@ export default function TrainersPage() {
                         <Mail className="h-4 w-4" />
                         <span>{trainer.email}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <Phone className="h-4 w-4" />
-                        <span>{trainer.phone}</span>
-                      </div>
                     </>
                   )}
                 </div>
 
                 {/* Stats Row */}
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                <div className="pt-4 border-t">
                   <div>
                     <p className="text-xs text-black">Clients</p>
                     <p className="text-xl font-bold text-gray-900">{trainer.clientCount}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-black">Rating</p>
-                    <p className="text-xl font-bold text-gray-900">{trainer.rating} ⭐</p>
                   </div>
                 </div>
 
@@ -488,14 +441,6 @@ export default function TrainersPage() {
                     onClick={() => handleViewClients(trainer)}
                   >
                     View Clients
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="flex-1" 
-                    size="sm"
-                    onClick={() => setSelectedTrainerForReports(trainer)}
-                  >
-                    View Reports ({reports.filter(r => r.trainerId === trainer.id).length})
                   </Button>
                   <Button
                     variant="outline"
@@ -599,125 +544,6 @@ export default function TrainersPage() {
                     ))}
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Reports Modal */}
-        {selectedTrainerForReports && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedTrainerForReports(null)}>
-            <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden bg-[#F7F5ED] relative" onClick={(e) => e.stopPropagation()}>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="absolute top-2 right-2 h-8 w-8 text-gray-600 hover:bg-gray-200 z-10"
-                onClick={() => setSelectedTrainerForReports(null)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-              <CardContent className="p-4 overflow-y-auto max-h-[90vh]">
-                {(() => {
-                  const trainerReports = reports.filter(r => r.trainerId === selectedTrainerForReports.id);
-
-                  return trainerReports.length === 0 ? (
-                    <div className="flex items-center justify-center py-16">
-                      <div className="text-center">
-                        <FileText className="h-10 w-10 text-black mx-auto mb-3" />
-                        <p className="text-sm text-black">No reports for this trainer</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          Reports for {selectedTrainerForReports.name}
-                        </h3>
-                        <p className="text-sm text-black">{trainerReports.length} {trainerReports.length === 1 ? 'report' : 'reports'}</p>
-                      </div>
-                      {trainerReports.map((report) => {
-                        const CategoryIcon = getCategoryIcon(report.category);
-                        
-                        return (
-                          <Card 
-                            key={report.id} 
-                            className="hover:shadow-md transition-shadow border-l-4 bg-white" 
-                            style={{ 
-                              borderLeftColor: report.severity === 'high' ? '#dc2626' : 
-                                              report.severity === 'medium' ? '#eab308' : '#3b82f6' 
-                            }}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-start justify-between mb-3">
-                                <div className="flex items-start gap-3 flex-1">
-                                  <div className={cn(
-                                    "p-2 rounded-lg border",
-                                    getSeverityColor(report.severity)
-                                  )}>
-                                    <CategoryIcon className="h-4 w-4" />
-                                  </div>
-                                  
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <h4 className="font-semibold text-sm text-gray-900">{getCategoryLabel(report.category)}</h4>
-                                      <span className={cn(
-                                        "text-[10px] px-1.5 py-0.5 rounded-full font-medium border",
-                                        getSeverityColor(report.severity)
-                                      )}>
-                                        {report.severity.toUpperCase()}
-                                      </span>
-                                    </div>
-
-                                    <div className="flex items-center gap-3 text-xs text-gray-600 mb-2">
-                                      <div className="flex items-center gap-1">
-                                        <User className="h-3 w-3" />
-                                        <span>Client: <strong>{report.clientName}</strong></span>
-                                      </div>
-                                      <div className="flex items-center gap-1">
-                                        <Clock className="h-3 w-3" />
-                                        <span>{new Date(report.date).toLocaleDateString('en-US', { 
-                                          month: 'short', 
-                                          day: 'numeric', 
-                                          year: 'numeric' 
-                                        })}</span>
-                                      </div>
-                                    </div>
-
-                                    <p className="text-gray-700 text-xs leading-relaxed">
-                                      {report.description}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Action Buttons */}
-                              <div className="flex gap-2 pt-3 border-t">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  className="flex-1 text-gray-600 hover:bg-gray-50 text-xs h-8"
-                                  onClick={() => handleDismissReport(report.id)}
-                                >
-                                  <X className="h-3 w-3 mr-1" />
-                                  Dismiss
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  className="flex-1 text-red-600 hover:bg-red-50 border-red-200 text-xs h-8"
-                                  onClick={() => handleDeleteTrainerFromReport(report.trainerId)}
-                                >
-                                  <Trash2 className="h-3 w-3 mr-1" />
-                                  Delete Trainer
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
               </CardContent>
             </Card>
           </div>

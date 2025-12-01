@@ -5,6 +5,7 @@ import Link from 'next/link';
 import AnimatedCard from '../components/AnimatedCard';
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AlertTriangle, X } from 'lucide-react';
 
 export default function RegisterPage() {
   const [firstName, setFirstName] = useState('');
@@ -13,6 +14,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordsDoNotMatch, setPasswordsDoNotMatch] = useState(false)
+  const [notification, setNotification] = useState<{message: string; type: 'error'} | null>(null);
   const router = useRouter();
 
   const handleSubmit = async(e: FormEvent<HTMLFormElement>) => {
@@ -60,16 +62,34 @@ export default function RegisterPage() {
         router.push('/dashboard')
       } else {
         console.error('❌ [Register] Signup failed:', data.error || data.errors || 'Unknown error');
-        alert(`Signup failed: ${data.error || 'Please check your information and try again.'}`);
+        setNotification({ message: data.error || 'Please check your information and try again.', type: 'error' });
+        setTimeout(() => setNotification(null), 4000);
       }
     } catch (error) {
       console.error('❌ [Register] Exception occurred:', error);
-      alert('An error occurred during signup. Please check the console for details.');
+      setNotification({ message: 'An error occurred during signup. Please try again.', type: 'error' });
+      setTimeout(() => setNotification(null), 4000);
     }
   }
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-[#F7F5ED] font-sans relative overflow-hidden">
+      {/* Notification Toast */}
+      {notification && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2 fade-in duration-300">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border bg-red-50 border-red-200 text-red-800">
+            <AlertTriangle className="h-5 w-5 text-red-600" />
+            <p className="font-medium text-sm">{notification.message}</p>
+            <button 
+              onClick={() => setNotification(null)}
+              className="ml-2 hover:opacity-70 transition-opacity"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Full screen background image */}
       <div className="absolute inset-0 w-full h-full">
         <Image

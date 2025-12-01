@@ -17,18 +17,6 @@ export interface Report {
   clientId?: string;
 }
 
-export interface ServiceReport {
-  id: string;
-  clientId: string;
-  clientName: string;
-  trainerId: string;
-  trainerName: string;
-  date: string;
-  category: 'unprofessional' | 'late' | 'unprepared' | 'inappropriate' | 'other';
-  severity: 'low' | 'medium' | 'high';
-  description: string;
-}
-
 export interface Trainer {
   id: string;
   name: string;
@@ -296,84 +284,3 @@ export const getTrainerByClientId = (clientId: string): Trainer | undefined => {
     trainer.clients.some(client => client.id === clientId)
   );
 };
-
-// Mock Service Reports - Client complaints about trainers
-export const mockServiceReports: ServiceReport[] = [
-  {
-    id: 'SR001',
-    clientId: 'C006',
-    clientName: 'Rachel Green',
-    trainerId: 'T002',
-    trainerName: 'Marcus Rodriguez',
-    date: '2024-10-08',
-    category: 'late',
-    severity: 'medium',
-    description: 'Trainer arrived 20 minutes late to our scheduled session without prior notice. This has happened twice this month.'
-  },
-  {
-    id: 'SR002',
-    clientId: 'C003',
-    clientName: 'James Wilson',
-    trainerId: 'T001',
-    trainerName: 'Sarah Johnson',
-    date: '2024-10-05',
-    category: 'unprepared',
-    severity: 'low',
-    description: 'Session felt disorganized. Trainer seemed unsure of the workout plan and kept checking their phone.'
-  },
-  {
-    id: 'SR003',
-    clientId: 'C010',
-    clientName: 'Alex Turner',
-    trainerId: 'T004',
-    trainerName: 'Kevin Murphy',
-    date: '2024-10-01',
-    category: 'unprofessional',
-    severity: 'high',
-    description: 'Trainer made inappropriate comments about my fitness level that made me uncomfortable during the session.'
-  },
-  {
-    id: 'SR004',
-    clientId: 'C008',
-    clientName: 'Tom Bradley',
-    trainerId: 'T003',
-    trainerName: 'Amanda Lee',
-    date: '2024-09-28',
-    category: 'unprepared',
-    severity: 'low',
-    description: 'Trainer forgot to bring resistance bands that we had scheduled to use for our workout.'
-  },
-  {
-    id: 'SR005',
-    clientId: 'C011',
-    clientName: 'Jessica Brown',
-    trainerId: 'T004',
-    trainerName: 'Kevin Murphy',
-    date: '2024-10-09',
-    category: 'inappropriate',
-    severity: 'high',
-    description: 'Trainer pushed me to continue exercises despite me expressing pain and discomfort. Felt pressured and unsafe.'
-  },
-  {
-    id: 'SR006',
-    clientId: 'C004',
-    clientName: 'Lisa Thompson',
-    trainerId: 'T002',
-    trainerName: 'Marcus Rodriguez',
-    date: '2024-10-06',
-    category: 'late',
-    severity: 'low',
-    description: 'Trainer was 10 minutes late but did call ahead to inform me about the delay.'
-  },
-  {
-    id: 'SR007',
-    clientId: 'C007',
-    clientName: 'Sofia Martinez',
-    trainerId: 'T003',
-    trainerName: 'Amanda Lee',
-    date: '2024-10-07',
-    category: 'other',
-    severity: 'medium',
-    description: 'Trainer cancelled last minute (1 hour before) for the third time this month. This disrupts my schedule significantly.'
-  }
-];

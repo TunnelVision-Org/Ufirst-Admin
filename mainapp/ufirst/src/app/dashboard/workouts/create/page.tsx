@@ -558,14 +558,14 @@ export default function WorkoutDashboardPage() {
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-black">
                       <Dumbbell className="h-5 w-5" />
                       Workout Details
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-black mb-1">
                         Workout Name *
                       </label>
                       <input
@@ -578,7 +578,7 @@ export default function WorkoutDashboardPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-black mb-1">
                         Notes / Instructions
                       </label>
                       <textarea
@@ -595,7 +595,7 @@ export default function WorkoutDashboardPage() {
 
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>Exercises</CardTitle>
+                    <CardTitle className="text-black">Exercises</CardTitle>
                     <Button type="button" variant="outline" size="sm" onClick={addExercise}>
                       <Plus className="h-4 w-4 mr-1" />
                       Add
@@ -605,7 +605,7 @@ export default function WorkoutDashboardPage() {
                     {exercises.map((exercise, index) => (
                       <div key={index} className="p-3 border rounded-lg bg-gray-50 space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-gray-500">Exercise {index + 1}</span>
+                          <span className="text-xs font-medium text-black">Exercise {index + 1}</span>
                           {exercises.length > 1 && (
                             <button
                               type="button"
@@ -656,7 +656,7 @@ export default function WorkoutDashboardPage() {
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-black">
                       <Users className="h-5 w-5" />
                       Assign to Your Clients
                     </CardTitle>
@@ -809,7 +809,7 @@ export default function WorkoutDashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Workout Name *</label>
+                  <label className="block text-sm font-medium text-black mb-1">Workout Name *</label>
                   <input
                     type="text"
                     value={editName}
@@ -819,12 +819,12 @@ export default function WorkoutDashboardPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Exercises</label>
+                  <label className="block text-sm font-medium text-black mb-2">Exercises</label>
                   <div className="space-y-3">
                     {editExercises.map((exercise, idx) => (
                       <div key={idx} className="p-3 border rounded-lg bg-gray-50">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-medium text-gray-500">Exercise {idx + 1}</span>
+                          <span className="text-xs font-medium text-black">Exercise {idx + 1}</span>
                           <button
                             type="button"
                             onClick={() => setEditExercises((prev) => prev.filter((_, i) => i !== idx))}
@@ -880,7 +880,7 @@ export default function WorkoutDashboardPage() {
                         size="sm"
                         onClick={() => setEditExercises((prev) => [...prev, { name: '', sets: '', reps: '', notes: '' }])}
                       >
-                        <Plus className="h-4 w-4 mr-1" />
+                        <Plus className="h-4 w-4 mr-1 text-black-500" />
                         Add Exercise
                       </Button>
                     </div>
@@ -890,7 +890,7 @@ export default function WorkoutDashboardPage() {
 
               <div>
                 <div className="mb-3">
-                  <h3 className="text-sm font-medium">Assign to your clients</h3>
+                  <h3 className="text-sm font-medium text-black">Assign to your clients</h3>
                   <p className="text-sm text-gray-500">Select one or more clients to assign this workout to.</p>
                 </div>
 
