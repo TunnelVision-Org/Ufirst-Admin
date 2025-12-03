@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tunnel Vision Fitness",
+  title: "UFirst",
   description: "Developed by Ufirst",
 };
 
