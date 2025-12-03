@@ -107,7 +107,7 @@ export default function RegisterPage() {
         <section className="flex-1 p-10 flex flex-col justify-center text-black">
           <div className="mb-8">
             <div className="text-2xl font-bold tracking-tight text-black mb-2 flex items-center gap-2">
-              <span>Tunnel Vision Fitness</span>
+              <span>UFirst</span>
             </div>
             <div className="text-sm text-black/60">Become the best version of you</div>
           </div>
